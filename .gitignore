@@ -1,0 +1,39 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+
+# Node modules (if you ever use Node later)
+node_modules/
+
+# Environment and sensitive files
+.env
+.env.*
+
+# Logs and cache
+*.log
+*.tmp
+*.cache
+.cache/
+
+# SQLite DBs or dumps
+*.sqlite
+*.db
+*.sql
+
+# PHPStorm project files
+*.iml
+
+# Composer (if you ever use it)
+vendor/
+
+# Coverage/test artifacts
+coverage/
+*.lcov
+
+# System files
+*.swp
+LICENSE
