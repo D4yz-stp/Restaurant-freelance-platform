@@ -1,0 +1,152 @@
+#button-signIn{
+    border-radius:5px;
+    background-color: yellow;
+    padding: 0.5em 0.5em;
+    color: black;
+    text-decoration: none;
+}
+header{
+    max-width: 100%;
+    max-height: 10em;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    color:white;
+    box-sizing: border-box;
+    
+    padding: 1rem 5%;
+    background: #002366;
+    position: fixed;
+    width: 90%;
+    z-index: 1000;
+}
+.header-brand h1 {
+    font-size: 2.5rem;
+    color: #FFD700;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.btn-signin {
+    background: #FFD700;
+    color: #002366;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+/* Shard Sections */
+.shard-section {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+}
+
+.shard-content {
+    max-width: 800px;
+    position: relative;
+    z-index: 2;
+}
+
+.shard1 { background: linear-gradient(135deg, #1a237e, #0d47a1); }
+.shard2 { background: linear-gradient(135deg, #00695c, #004d40); }
+.shard3 { background: linear-gradient(135deg, #ff6f00, #e65100); }
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .shard-content h1 { font-size: 2rem; }
+    .shard-content p { font-size: 1rem; }
+}
+.main-container {
+    perspective: 1px;
+    transform-style: preserve-3d;
+}
+
+
+
+
+
+
+footer {
+    background-color: #FFDD00;
+    color: #000;
+    font-family: Arial, sans-serif;
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+footer .container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.upper-footer,
+.lower-footer {
+    margin-bottom: 3rem;
+}
+
+.upper-footer p.title,
+.lower-footer p.title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.upper-footer a,
+.lower-footer a {
+    color: #000;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.lower-footer .socials {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.lower-footer ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 2rem;
+}
+
+.lower-footer ul li {
+    margin-bottom: 0.75rem;
+}
+
+.language-switcher {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+.language-switcher a {
+    margin: 0 8px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #000;
+    transition: color 0.2s;
+}
+
+.language-switcher a:hover {
+    color: #333;
+}
+
+.socials a svg {
+    width: 24px;
+    height: 24px;
+    fill: #000;
+    transition: transform 0.3s ease;
+}
+
+.socials a:hover svg {
+    transform: scale(1.2);
+}

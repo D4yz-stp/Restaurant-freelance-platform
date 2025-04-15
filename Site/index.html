@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OlgaRJ</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poetsen+One&display=swap" rel="stylesheet">
+
+
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <div class="header-left">
+                <h1 style="font-family: 'Bebas Neue',sans-serif; font-size: 3rem;">OlgaRJ</h1>
+            </div>
+            <div class="header-right">
+                <a id="button-signIn" href="#" style="font-family: 'Bebas Neue',sans-serif;">Entrar</a>
+            </div>
+        </header>
+
+        <section class="shard-section shard1" data-aos="shard-fade-up">
+            <div class="shard-content">
+                <h1>Perfis Profissionais</h1>
+                <p>Crie seu perfil profissional na restauração</p>
+            </div>
+        </section>
+
+        <section class="shard-section shard2" data-aos="shard-slide-left">
+            <div class="shard-content">
+                <h1>Por que somos os melhores?</h1>
+                <p>Plataforma moderna para profissionais</p>
+            </div>
+        </section>
+
+        <section class="shard-section shard3" data-aos="shard-slide-right">
+            <div class="shard-content">
+                <h1>Gestão Online</h1>
+                <p>Controle total de contratos e horários</p>
+            </div>
+        </section>
+
+        <footer id="footer">
+            <div class="upper-footer" data-aos="fade-up">
+                <p class="title font-bold">Quer contactar a nossa equipa?</p>
+                <p>
+                    Entre aqui em contacto conosco, estamos aqui para ajudar!
+                    <a 
+                        href="tel:+351919766488" 
+                        class="font-bold"
+                        me:view="DataLayerPush"
+                        data-layer-details='{
+                            "event": "clique_telefone",
+                            "page_name": "home"
+                        }'>
+                        +351 919 766 488 Algarve (8500-013)
+                    </a>
+                </p>
+            </div>
+        
+            <div class="lower-footer">
+                <div class="footer-grid">
+                    <!-- Links rápidos -->
+                    <div data-aos="fade-up" data-aos-delay="100">
+                        <p class="title font-bold">Links rápidos</p>
+                        <ul>
+                            <li><a href="/sobre">Sobre nós</a></li>
+                            <li><a href="/como-funciona">Como funciona</a></li>
+                            <li><a href="/faq">FAQ</a></li>
+                            <li><a href="/politica-privacidade">Política de Privacidade</a></li>
+                            <li><a href="/registar-conta">Criar conta</a></li>
+                        </ul>
+                    </div>
+        
+                    <!-- Contacto -->
+                    <div data-aos="fade-up" data-aos-delay="200">
+                        <p class="title font-bold">Precisa de ajuda?</p>
+                        <p>Envie-nos um email: 
+                            <a href="mailto:olgajr@hotmail.com">olgajr@hotmail.com</a>
+                        </p>
+                        <div class="social-icons">
+                            <a href="https://www.instagram.com/olgaJR.ca" target="_blank" aria-label="Instagram">
+                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M7.75 2C4.6 2 2 4.6 2 7.75v8.5C2 19.4 4.6 22 7.75 22h8.5c3.15 0 5.75-2.6 5.75-5.75v-8.5C22 4.6 19.4 2 16.25 2h-8.5zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm6.5-.75a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.linkedin.com/company/olgaJR" target="_blank" aria-label="LinkedIn">
+                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.11 1 2.5 1s2.48 1.12 2.48 2.5zM0 8h5v16H0V8zm7.5 0H12v2.34h.07c.63-1.2 2.18-2.34 4.48-2.34 4.8 0 5.7 3.16 5.7 7.26V24h-5V15.25c0-2.1-.04-4.79-2.91-4.79-2.91 0-3.36 2.27-3.36 4.62V24h-5V8z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+        
+                    <!-- Newsletter -->
+                    <div data-aos="fade-up" data-aos-delay="300">
+                        <p class="title font-bold">Receba novidades</p>
+                        <form action="/subscrever" method="post">
+                            <input type="email" name="email" placeholder="Seu email" required />
+                            <button type="submit">Subscrever</button>
+                        </form>
+                    </div>
+        
+                    <!-- Idioma -->
+                    <div data-aos="fade-up" data-aos-delay="400">
+                        <p class="title font-bold">Idioma</p>
+                        <div class="language-switcher">
+                            <a href="?lang=pt">🇵🇹 PT</a> | 
+                            <a href="?lang=en">🇺🇸 EN</a> | 
+                            <a href="?lang=fr">🇫🇷 FR</a>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Voltar ao topo -->
+                <a href="#topo" class="back-to-top" data-aos="fade-in">↑ Voltar ao topo</a>
+        
+                <!-- Direitos -->
+                <p class="copyright">© 2025 olgaJR. Todos os direitos reservados.</p>
+            </div>
+        </footer>     
+    </div> 
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="js/animations.js"></script>           
+</body>
+</html>
