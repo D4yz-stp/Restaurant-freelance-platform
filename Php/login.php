@@ -60,8 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($stmt->execute()) {
                     $_SESSION['success'] = "Registo realizado com sucesso!";
-                    header("Location: login.php"); // Redirecionar para login
-                    exit();
+                    echo "Conta criada com sucesso!"; // Exibe a mensagem de sucesso
                 } else {
                     $errors[] = "Erro ao criar conta";
                 }
@@ -71,12 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Guardar erros na sessão e redirecionar
-    $_SESSION['errors'] = $errors;
-    header("Location: registo.html"); // Voltar ao formulário
-    exit();
+    // Se houver erros, exibe-os
+    if (!empty($errors)) {
+        echo "Erros: <br>";
+        foreach ($errors as $error) {
+            echo $error . "<br>";
+        }
+    }
+} else {
+    echo "Método de requisição inválido!";
 }
-
-// Se não for POST, redirecionar
-header("Location: registo.html");
-exit();
+?>
