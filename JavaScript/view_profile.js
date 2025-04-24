@@ -1,14 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-      nome: 'João Oliveira',
-      email: 'joao@email.com',
-      profissao: 'Chef de cozinha',
-      localizacao: 'Albufeira, Algarve'
-    };
-  
-    document.getElementById('nome').innerText = userData.nome;
-    document.getElementById('email').innerText = userData.email;
-    document.getElementById('profissao').innerText = userData.profissao;
-    document.getElementById('localizacao').innerText = userData.localizacao;
-  });
-  
+  fetch('../../Php/verPerfil.php')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('nome').textContent = `${data.first_name} ${data.last_name}`;
+      document.getElementById('email').textContent = data.email;
+      document.getElementById('profissao').textContent = data.profissao;
+      document.getElementById('localizacao').textContent = data.localizacao || 'Não definida';
+    })
+    .catch(error => console.error('Erro ao carregar perfil:', error));
+});
