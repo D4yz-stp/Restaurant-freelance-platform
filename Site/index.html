@@ -1,75 +1,65 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OlgaRJ</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poetsen+One&display=swap" rel="stylesheet">
-
-
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="main-container">
-        <header>
-            <div class="header-left">
-                <h1 style="font-family: 'Bebas Neue',sans-serif; font-size: 3rem;">OlgaRJ</h1>
+    <div class="main-wrapper">
+        <header class="main-header">
+            <div class="header-brand">
+                <h1>OlgaRJ</h1>
             </div>
-            <div class="header-right">
-                <a id="button-signIn" href="#" style="font-family: 'Bebas Neue',sans-serif;">Entrar</a>
-            </div>
+            <nav class="header-nav">
+                <a href="#" class="btn-signin">Entrar</a>
+            </nav>
         </header>
 
-        <section class="shard-section shard1" data-aos="shard-fade-up">
-            <div class="shard-content">
-                <h1>Perfis Profissionais</h1>
-                <p>Crie seu perfil profissional na restauração</p>
-            </div>
-        </section>
+        <main>
+            <section class="shard-section shard1" data-aos="fade-up">
+                <div class="shard-content">
+                    <h1>Perfis Profissionais</h1>
+                    <p>Crie seu perfil profissional na restauração</p>
+                </div>
+            </section>
 
-        <section class="shard-section shard2" data-aos="shard-slide-left">
-            <div class="shard-content">
-                <h1>Por que somos os melhores?</h1>
-                <p>Plataforma moderna para profissionais</p>
-            </div>
-        </section>
+            <section class="shard-section shard2" data-aos="fade-up">
+                <div class="shard-content">
+                    <h1>Por que somos os melhores?</h1>
+                    <p>Plataforma moderna para profissionais</p>
+                </div>
+            </section>
 
-        <section class="shard-section shard3" data-aos="shard-slide-right">
-            <div class="shard-content">
-                <h1>Gestão Online</h1>
-                <p>Controle total de contratos e horários</p>
-            </div>
-        </section>
+            <section class="shard-section shard3" data-aos="fade-up">
+                <div class="shard-content">
+                    <h1>Gestão Online</h1>
+                    <p>Controle total de contratos e horários</p>
+                </div>
+            </section>
+        </main>
 
-        <footer id="footer">
-            <div class="upper-footer" data-aos="fade-up">
-                <p class="title font-bold">Quer contactar a nossa equipa?</p>
-                <p>
+        <footer class="main-footer">
+            <div class="footer-top" data-aos="fade-up">
+                <p class="footer-title">Quer contactar a nossa equipa?</p>
+                <p class="footer-contact">
                     Entre aqui em contacto conosco, estamos aqui para ajudar!
-                    <a 
-                        href="tel:+351919766488" 
-                        class="font-bold"
-                        me:view="DataLayerPush"
-                        data-layer-details='{
-                            "event": "clique_telefone",
-                            "page_name": "home"
-                        }'>
+                    <a href="tel:+351919766488" class="phone-link">
                         +351 919 766 488 Algarve (8500-013)
                     </a>
                 </p>
             </div>
-        
-            <div class="lower-footer">
+            
+            <div class="footer-bottom">
                 <div class="footer-grid">
-                    <!-- Links rápidos -->
-                    <div data-aos="fade-up" data-aos-delay="100">
-                        <p class="title font-bold">Links rápidos</p>
-                        <ul>
+                    <div class="footer-col" data-aos="fade-up" data-aos-delay="100">
+                        <h3 class="footer-title">Links rápidos</h3>
+                        <ul class="footer-links">
                             <li><a href="/sobre">Sobre nós</a></li>
                             <li><a href="/como-funciona">Como funciona</a></li>
                             <li><a href="/faq">FAQ</a></li>
@@ -77,57 +67,60 @@
                             <li><a href="/registar-conta">Criar conta</a></li>
                         </ul>
                     </div>
-        
-                    <!-- Contacto -->
-                    <div data-aos="fade-up" data-aos-delay="200">
-                        <p class="title font-bold">Precisa de ajuda?</p>
-                        <p>Envie-nos um email: 
+
+                    <div class="footer-col" data-aos="fade-up" data-aos-delay="200">
+                        <h3 class="footer-title">Precisa de ajuda?</h3>
+                        <p class="footer-contact">
+                            Envie-nos um email:<br>
                             <a href="mailto:olgajr@hotmail.com">olgajr@hotmail.com</a>
                         </p>
                         <div class="social-icons">
-                            <a href="https://www.instagram.com/olgaJR.ca" target="_blank" aria-label="Instagram">
-                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M7.75 2C4.6 2 2 4.6 2 7.75v8.5C2 19.4 4.6 22 7.75 22h8.5c3.15 0 5.75-2.6 5.75-5.75v-8.5C22 4.6 19.4 2 16.25 2h-8.5zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm6.5-.75a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/>
+                            <a href="https://www.instagram.com/olgaJR.ca" target="_blank">
+                                <svg width="24" height="24" viewBox="0 0 24 24">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
                                 </svg>
                             </a>
-                            <a href="https://www.linkedin.com/company/olgaJR" target="_blank" aria-label="LinkedIn">
-                                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.11 1 2.5 1s2.48 1.12 2.48 2.5zM0 8h5v16H0V8zm7.5 0H12v2.34h.07c.63-1.2 2.18-2.34 4.48-2.34 4.8 0 5.7 3.16 5.7 7.26V24h-5V15.25c0-2.1-.04-4.79-2.91-4.79-2.91 0-3.36 2.27-3.36 4.62V24h-5V8z"/>
+                            <a href="https://www.linkedin.com/company/olgaJR" target="_blank">
+                                <svg width="24" height="24" viewBox="0 0 24 24">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                                 </svg>
                             </a>
                         </div>
                     </div>
-        
-                    <!-- Newsletter -->
-                    <div data-aos="fade-up" data-aos-delay="300">
-                        <p class="title font-bold">Receba novidades</p>
-                        <form action="/subscrever" method="post">
-                            <input type="email" name="email" placeholder="Seu email" required />
+
+                    <div class="footer-col" data-aos="fade-up" data-aos-delay="300">
+                        <h3 class="footer-title">Newsletter</h3>
+                        <form class="newsletter-form">
+                            <input type="email" placeholder="Seu email" required>
                             <button type="submit">Subscrever</button>
                         </form>
                     </div>
-        
-                    <!-- Idioma -->
-                    <div data-aos="fade-up" data-aos-delay="400">
-                        <p class="title font-bold">Idioma</p>
+
+                    <div class="footer-col" data-aos="fade-up" data-aos-delay="400">
+                        <h3 class="footer-title">Idioma</h3>
                         <div class="language-switcher">
-                            <a href="?lang=pt">🇵🇹 PT</a> | 
-                            <a href="?lang=en">🇺🇸 EN</a> | 
+                            <a href="?lang=pt">🇵🇹 PT</a> 
+                            <a href="?lang=en">🇺🇸 EN</a> 
                             <a href="?lang=fr">🇫🇷 FR</a>
                         </div>
                     </div>
                 </div>
-        
-                <!-- Voltar ao topo -->
-                <a href="#topo" class="back-to-top" data-aos="fade-in">↑ Voltar ao topo</a>
-        
-                <!-- Direitos -->
-                <p class="copyright">© 2025 olgaJR. Todos os direitos reservados.</p>
+
+                <div class="footer-legal">
+                    <a href="#top" class="back-to-top">↑ Voltar ao topo</a>
+                    <p class="copyright">© 2025 OlgaRJ. Todos os direitos reservados.</p>
+                </div>
             </div>
-        </footer>     
-    </div> 
+        </footer>
+    </div>
+
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="js/animations.js"></script>           
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 120
+        });
+    </script>
 </body>
 </html>
