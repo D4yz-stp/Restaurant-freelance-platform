@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <title>Selecionar Tipo de Conta - OlgaRJ</title>
+    <link rel="stylesheet" href="../../Css/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <h2>Tipo de Conta</h2>
+        <p>Como pretendes utilizar a plataforma?</p>
+
+        <form id="roleForm" action="definir_tipo_conta.php" method="POST">
+            <button type="submit" name="role" value="freelancer">Sou Freelancer</button>
+            <button type="submit" name="role" value="restaurant">Sou Restaurante</button>
+            <button type="submit" name="role" value="ambos">Ambos</button>
+        </form>
+    </div>
+</body>
+</html>
