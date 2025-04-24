@@ -64,7 +64,7 @@ html {
 body {
     font-family: var(--font-family-main);
     line-height: 1.6;
-    background: var(--color-bg-light);
+    background-color: var(--color-bg-light);
     color: var(--color-text);
     overflow-x: hidden;      /* Previne barras de rolagem horizontais */
 }
