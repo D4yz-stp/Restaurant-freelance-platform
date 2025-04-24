@@ -1,0 +1,44 @@
+=================================================================
+   VARIÁVEIS E CONFIGURAÇÕES GLOBAIS
+   Aqui definimos todas as cores, sombras, e outros valores que 
+   serão reutilizados em todo o site para manter consistência.
+=================================================================
+:root { */
+    /* Cores principais */
+    --color-primary: #002366;             /* Azul escuro - cor principal da marca */
+    --color-primary-dark: #001a4d;        /* Azul escuro mais intenso para hover */
+    --color-accent: #FFD700;              /* Dourado - cor de destaque */
+    --color-accent-dark: #E6C200;         /* Dourado mais escuro para hover */
+    --color-bg-light: #ffffff;            /* Branco para fundo */
+    --color-text: #333333;                /* Cinza escuro para textos */
+    --color-text-light: #ffffff;          /* Branco para textos sobre fundos escuros */
+    --color-gray: #f5f5f5;                /* Cinza claro para áreas secundárias */
+    
+    /* Gradientes para cards e elementos visuais */
+    --gradient-blue: linear-gradient(135deg, #1a237e, #0d47a1);       /* Azul profundo */
+    --gradient-green: linear-gradient(135deg, #00695c, #004d40);      /* Verde escuro */
+    --gradient-orange: linear-gradient(135deg, #ff6f00, #e65100);     /* Laranja quente */
+    
+    /* Sombras para profundidade */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);      /* Sombra sutil */
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.1);      /* Sombra média */
+    --shadow-lg: 0 8px 16px rgba(0,0,0,0.1);     /* Sombra pronunciada */
+    
+    /* Bordas arredondadas */
+    --border-radius-sm: 4px;               /* Raio pequeno */
+    --border-radius-md: 8px;               /* Raio médio */
+    --border-radius-lg: 16px;              /* Raio grande */
+    --border-radius-full: 9999px;          /* Raio circular (botões etc) */
+    
+    /* Transições suaves */
+    --transition-fast: 0.2s ease;          /* Transição rápida */
+    --transition-normal: 0.3s ease;        /* Transição normal */
+    
+    /* Layout e dimensões */
+    --container-max-width: 1200px;         /* Largura máxima do conteúdo */
+    --container-padding: 2rem;             /* Padding lateral do container */
+    
+    /* Tipografia */
+    --font-family-main: 'Bebas Neue', sans-serif;           /* Fonte principal */
+    --font-family-secondary: 'Poetsen One', Arial, sans-serif;  /* Fonte secundária */
+}
