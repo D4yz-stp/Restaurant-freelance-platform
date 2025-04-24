@@ -1,12 +1,14 @@
 body {
     margin: 0;
-    padding: 0;
     font-family: 'Bebas Neue', sans-serif;
     background: #f7f7f7;
     display: flex;
-    align-items: center;
     justify-content: center;
-    height: 100vh;
+    box-sizing: border-box;
+    height: auto; 
+    min-height: 100vh; 
+    padding: 3rem 1rem;
+    align-items: center; 
 }
 
 .auth-container {
@@ -19,6 +21,7 @@ body {
     max-width: 450px;
     max-height: 90vh;
     overflow-y: auto;
+    margin : 0;
 }
 
 .auth-container h2 {
