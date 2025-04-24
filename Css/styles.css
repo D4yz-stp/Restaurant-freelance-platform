@@ -152,13 +152,16 @@ img {
     z-index: 1000;  /* Sempre à frente de outros elementos */
     box-shadow: var(--shadow-sm);
     padding: 1rem 0;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal),
+                padding var(--transition-normal),
+                box-shadow var(--transition-normal),
+                transform var(--transition-normal);
 }
 
 /* Efeito quando a página rola para baixo */
 .main-header.scrolled {
     background: rgba(0,35,102,0.95);  /* Azul semi-transparente */
-    padding: 0.75rem 0;  /* Ligeiramente mais compacto */
+    padding: 0.35rem 0;  /* Ligeiramente mais compacto */
 }
 
 /* Layout do cabeçalho */
