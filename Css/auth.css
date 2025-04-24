@@ -7,45 +7,46 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
-    color: #333;
 }
 
 .auth-container {
     background-color: #fff;
-    padding: 3rem;
-    border-radius: 16px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+    padding: 2rem 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     text-align: center;
     width: 100%;
-    max-width: 420px;
-    transition: all 0.3s ease-in-out;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .auth-container h2 {
-    margin-bottom: 2rem;
-    font-size: 2.5rem;
-    color: #222;
-    letter-spacing: 1px;
+    margin-bottom: 1.5rem;
+    font-size: 2.7rem;
+    font-family: 'Bebas Neue', sans-serif;
+    color: #333;
 }
 
 .auth-container form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 0.8rem;
+    text-align: left;
 }
 
-.auth-container input {
-    padding: 1rem;
+.auth-container label {
+    font-size: 1rem;
+    color: #444;
+}
+
+.auth-container input,
+.auth-container select {
+    padding: 0.75rem;
     font-size: 1rem;
     border: 1px solid #ccc;
-    border-radius: 10px;
-    background-color: #fefefe;
-    transition: border 0.2s ease;
-}
-
-.auth-container input:focus {
-    border-color: #ffdd00;
-    outline: none;
+    border-radius: 8px;
+    font-family: sans-serif;
 }
 
 .auth-container button {
@@ -53,10 +54,10 @@ body {
     background-color: #ffdd00;
     border: none;
     font-size: 1.2rem;
-    font-family: 'Bebas Neue', sans-serif;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background 0.3s ease;
+    font-family: 'Bebas Neue', sans-serif;
 }
 
 .auth-container button:hover {
@@ -71,35 +72,9 @@ body {
 .auth-container a {
     color: #000;
     text-decoration: underline;
-    transition: color 0.2s ease;
 }
 
-.auth-container a:hover {
-    color: #444;
+/* Ocultar select de role (já que será escolhido depois) */
+#role {
+    display: none;
 }
-
-.auth-container .success-message {
-    color: #28a745;
-    font-size: 0.9rem;
-    margin-top: 1rem;
-}
-.auth-container .error-message {
-    color: #ff0000;
-    font-size: 0.9rem;
-    margin-top: 1rem;
-}
-
-.auth-container .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: #ffdd00;
-}
-
-.auth-container .loading img {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-

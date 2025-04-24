@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <title>Registo - OlgaRJ</title>
     <link rel="stylesheet" href="../../Css/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="register-container">
+    <div class="auth-container">
         <h2>Registar Conta</h2>
         <form action="register.php" method="POST">
             <label for="first_name">Nome</label>
@@ -30,11 +31,8 @@
             <label for="city">Cidade</label>
             <input type="text" id="city" name="city">
 
-            <label for="role">Tipo de Conta</label>
-            <select id="role" name="role" required>
-                <option value="freelancer">Freelancer</option>
-                <option value="restaurant">Restaurante</option>
-            </select>
+            <!-- Campo oculto (será tratado na próxima página) -->
+            <input type="hidden" id="role" name="role" value="">
 
             <button type="submit">Criar Conta</button>
         </form>
