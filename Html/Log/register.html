@@ -8,34 +8,112 @@
 </head>
 <body>
     <div class="auth-container">
-        <h2>Registar Conta</h2>
-        <form action="../../Php/login.php" method="POST">
-            <label for="first_name">Nome</label>
-            <input type="text" id="first_name" name="first_name" required>
+        <div id="error-container" class="error-message"></div>
+        <div id="success-container" class="success-message"></div>
+        
+        <div id="step1" class="step active">
+            <h2>Registar Conta</h2>
+            <form id="basicInfoForm">
+                <label for="first_name">Nome</label>
+                <input type="text" id="first_name" name="first_name" required>
+                
+                <label for="last_name">Apelido</label>
+                <input type="text" id="last_name" name="last_name" required>
+                
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" required>
+                
+                <label for="password">Palavra-passe</label>
+                <input type="password" id="password" name="password" required>
+                
+                <label for="contact">Contacto</label>
+                <input type="text" id="contact" name="contact" required>
+                
+                <label for="country">País</label>
+                <input type="text" id="country" name="country">
+                
+                <label for="city">Cidade</label>
+                <input type="text" id="city" name="city">
+                
+                <button type="button" id="nextToRoleBtn">Continuar</button>
+            </form>
+        </div>
 
-            <label for="last_name">Apelido</label>
-            <input type="text" id="last_name" name="last_name" required>
+        <div id="step2" class="step">
+            <h2>Escolha o seu perfil</h2>
+            <div class="role-selection">
+                <div class="role-option" data-role="freelancer">
+                    <h3>Freelancer</h3>
+                    <p>Procura trabalho em restaurantes</p>
+                </div>
+                <div class="role-option" data-role="manager">
+                    <h3>Manager</h3>
+                    <p>Contrata freelancers para o restaurante</p>
+                </div>
+            </div>
+            <div class="buttons-container">
+                <button type="button" class="back-button" id="backToBasicBtn">Voltar</button>
+                <button type="button" id="nextToDetailsBtn" disabled>Continuar</button>
+            </div>
+        </div>
 
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" required>
+        <div id="step3-freelancer" class="step">
+            <h2>Perfil de Freelancer</h2>
+            <form id="freelancerForm">
+                <label for="hourly_rate">Valor por hora (€)</label>
+                <input type="number" id="hourly_rate" name="hourly_rate" min="1" required>
+                
+                <label for="availability">Disponibilidade</label>
+                <select id="availability" name="availability" required>
+                    <option value="flexible">Flexível</option>
+                    <option value="mornings">Manhãs</option>
+                    <option value="afternoons">Tardes</option>
+                    <option value="evenings">Noites</option>
+                    <option value="weekends">Fins de Semana</option>
+                </select>
+                
+                <label for="experience_years">Anos de Experiência</label>
+                <input type="number" id="experience_years" name="experience_years" min="0" required>
+                
+                <input type="hidden" id="avg_rating" name="avg_rating" value="0">
+                <input type="hidden" id="role" name="role" value="freelancer">
+                
+                <div class="buttons-container">
+                    <button type="button" class="back-button" id="freelancerBackBtn">Voltar</button>
+                    <button type="submit">Criar Conta</button>
+                </div>
+            </form>
+        </div>
 
-            <label for="password">Palavra-passe</label>
-            <input type="password" id="password" name="password" value="" required>
-
-            <label for="contact">Contacto</label>
-            <input type="text" id="contact" name="contact" required>
-
-            <label for="country">País</label>
-            <input type="text" id="country" name="country">
-
-            <label for="city">Cidade</label>
-            <input type="text" id="city" name="city">
-
-            <!-- Campo oculto (será tratado na próxima página) -->
-            <input type="hidden" id="role" name="role" value="">
-
-            <button type="submit">Criar Conta</button>
-        </form>
+        <div id="step3-manager" class="step">
+            <h2>Perfil de Restaurante</h2>
+            <form id="managerForm">
+                <label for="restaurant_name">Nome do Restaurante</label>
+                <input type="text" id="restaurant_name" name="restaurant_name" required>
+                
+                <label for="restaurant_type">Tipo de Restaurante</label>
+                <select id="restaurant_type" name="restaurant_type" required>
+                    <option value="tradicional">Tradicional</option>
+                    <option value="fastfood">Fast Food</option>
+                    <option value="cafe">Café</option>
+                    <option value="bar">Bar</option>
+                    <option value="pizzaria">Pizzaria</option>
+                    <option value="outro">Outro</option>
+                </select>
+                
+                <label for="description">Descrição</label>
+                <textarea id="description" name="description" required></textarea>
+                
+                <input type="hidden" id="avg_rating_restaurant" name="avg_rating" value="0">
+                <input type="hidden" id="role_manager" name="role" value="manager">
+                
+                <div class="buttons-container">
+                    <button type="button" class="back-button" id="managerBackBtn">Voltar</button>
+                    <button type="submit">Criar Conta</button>
+                </div>
+            </form>
+        </div>
     </div>
+    <script src="../../JavaScript/register.js"></script>
 </body>
 </html>
