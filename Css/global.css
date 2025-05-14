@@ -1,0 +1,76 @@
+/* =================================================================
+   VARIÁVEIS E CONFIGURAÇÕES GLOBAIS
+================================================================= */
+:root {
+    /* Cores principais */
+    --color-primary: #002366;
+    --color-primary-dark: #001a4d;
+    --color-accent: #FFD700;
+    --color-accent-dark: #E6C200;
+    --color-bg-light: #ffffff;
+    --color-text: #333333;
+    --color-text-light: #ffffff;
+    --color-gray: #f5f5f5;
+    
+    /* Gradientes para cards */
+    --gradient-blue: linear-gradient(135deg, #1a237e, #0d47a1);
+    --gradient-green: linear-gradient(135deg, #00695c, #004d40);
+    --gradient-orange: linear-gradient(135deg, #ff6f00, #e65100);
+    
+    /* Sombras */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+    
+    /* Bordas */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-full: 9999px;
+    
+    /* Transições */
+    --transition: 0.3s ease;
+    
+    /* Layout */
+    --container-max-width: 1200px;
+    --container-padding: 2rem;
+    
+    /* Fontes */
+    --font-family: 'Poppins', sans-serif;
+}
+
+/* =================================================================
+   RESET E CONFIGURAÇÕES BASE
+================================================================= */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    background-color: var(--color-bg-light);
+    color: var(--color-text);
+    overflow-x: hidden;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container comum */
+.container {
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+}

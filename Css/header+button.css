@@ -1,0 +1,74 @@
+/* =================================================================
+   CABEÇALHO (HEADER)
+================================================================= */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--color-primary);
+    z-index: 1000;
+    box-shadow: var(--shadow-sm);
+    padding: 1rem 0;
+    transition: all var(--transition);
+}
+
+.main-header.scrolled {
+    background: rgba(0,35,102,0.95);
+    padding: 0.5rem 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Marca/logo */
+.header-brand a {
+    text-decoration: none;
+}
+
+.header-brand h1 {
+    font-size: 2.5rem;
+    color: var(--color-accent);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    margin: 0;
+}
+
+/* Botões */
+.btn {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--border-radius-full);
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none;
+}
+
+.btn-primary {
+    background: var(--color-accent);
+    color: var(--color-primary);
+}
+
+.btn-primary:hover, 
+.btn-primary:focus {
+    background: var(--color-accent-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--color-text-light);
+    border: 2px solid var(--color-text-light);
+}
+
+.btn-outline:hover,
+.btn-outline:focus {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}

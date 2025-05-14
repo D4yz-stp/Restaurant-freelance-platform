@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serviços</title>
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="../../Css/global.css">
+    <link rel="stylesheet" href="../../Css/service.css">
+</head>
+<body>
+    <main>
+        <section class="services-hero">
+            <div class="container">
+                <h1>Descubra os melhores serviços</h1>
+                <p>Encontre profissionais qualificados para realizar o trabalho que você precisa</p>
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Procure por serviços, palavras-chave ou habilidades...">
+                    <button class="search-btn">Buscar</button>
+                </div>
+            </div>
+        </section>
+        
+        <div class="container">
+            <div class="main-content">
+                <aside class="filters">
+                    <h3 class="filter-title" style="margin-top: 0;">Filtros</h3>
+                    
+                    <div class="filter-section">
+                        <h4 class="filter-title">Experiência</h4>
+                        <input type="range" class="range-slider" min="0" max="15" step="1" value="0" id="experience-slider">
+                        <div class="range-values">
+                            <span>0 anos</span>
+                            <span id="experience-value">0 anos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h4 class="filter-title">Valor por hora</h4>
+                        <div class="price-inputs">
+                            <input type="number" placeholder="Min" id="price-min" min="0">
+                            <span>-</span>
+                            <input type="number" placeholder="Max" id="price-max" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h4 class="filter-title">Horário disponível</h4>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="time" value="morning"> Manhãs
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="time" value="afternoon"> Tardes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="time" value="evening"> Noites
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="time" value="weekend"> Fins de semana
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="time" value="flexible"> Horário flexível
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button class="filter-btn">Aplicar filtros</button>
+                </aside>
+                
+                <div class="services-container">
+                    <div class="services-header">
+                        <div class="found-count">
+                            <strong>123</strong> serviços encontrados
+                        </div>
+                        
+                        <div class="sort-dropdown">
+                            <div class="sort-button">
+                                Ordenar por: <strong>Relevância</strong>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="sort-dropdown-content">
+                                <div class="sort-option" data-sort="relevance">Relevância</div>
+                                <div class="sort-option" data-sort="rating">Avaliações</div>
+                                <div class="sort-option" data-sort="price-asc">Preço (menor-maior)</div>
+                                <div class="sort-option" data-sort="price-desc">Preço (maior-menor)</div>
+                                <div class="sort-option" data-sort="experience">Experiência</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="services-grid">
+                        <!-- Serviço 1 -->
+                        <div class="service-card" data-aos="fade-up">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="Design Gráfico">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">João Silva</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Design gráfico profissional para sua marca</h3>
+                                <p class="service-description">Criação de logotipos, materiais de marketing e identidade visual completa para sua empresa.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 7 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Flexível, Manhãs
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 85 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        4.9 (127)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Serviço 2 -->
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="100">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="Desenvolvimento Web">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">Maria Santos</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Desenvolvimento de sites e aplicações web</h3>
+                                <p class="service-description">Criação de sites responsivos, lojas virtuais e sistemas web personalizados com as tecnologias mais modernas.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 5 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Tardes, Fins de semana
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 110 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        4.8 (92)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Serviço 3 -->
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="200">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="Social Media">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">Ana Oliveira</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Gestão de redes sociais e marketing digital</h3>
+                                <p class="service-description">Planejamento, criação de conteúdo e gestão de campanhas para Instagram, Facebook, LinkedIn e TikTok.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 3 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Flexível, Noites
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 75 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        4.7 (58)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Serviço 4 -->
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="300">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="Tradução">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">Carlos Mendes</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Tradução e legendagem profissional</h3>
+                                <p class="service-description">Serviços de tradução em português, inglês, espanhol e francês para documentos, sites e vídeos.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 10 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Manhãs, Tardes
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 60 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        4.9 (215)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Serviço 5 -->
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="400">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="SEO">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">Luísa Castro</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Otimização de sites para mecanismos de busca (SEO)</h3>
+                                <p class="service-description">Aumente sua visibilidade no Google e outros buscadores com estratégias de SEO comprovadas.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 6 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Tardes, Fins de semana
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 95 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        4.8 (74)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Serviço 6 -->
+                        <div class="service-card" data-aos="fade-up" data-aos-delay="500">
+                            <div class="service-image">
+                                <img src="/api/placeholder/600/400" alt="Consultoria Financeira">
+                                <div class="service-provider">
+                                    <img src="/api/placeholder/100/100" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name">Pedro Almeida</div>
+                                </div>
+                            </div>
+                            <div class="service-details">
+                                <h3 class="service-title">Consultoria financeira para empresas e startups</h3>
+                                <p class="service-description">Análise financeira, planejamento estratégico e orientação para captação de investimentos.</p>
+                                <div class="service-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-briefcase"></i> 12 anos exp.
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i> Manhãs, Noites
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <div class="service-price">
+                                        R$ 150 <span>/hora</span>
+                                    </div>
+                                    <div class="service-rating">
+                                        <i class="fas fa-star rating-star"></i>
+                                        5.0 (43)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pagination">
+                        <a href="#" class="page-link prev"><i class="fas fa-chevron-left"></i></a>
+                        <a href="#" class="page-link active">1</a>
+                        <a href="#" class="page-link">2</a>
+                        <a href="#" class="page-link">3</a>
+                        <a href="#" class="page-link">4</a>
+                        <a href="#" class="page-link">5</a>
+                        <a href="#" class="page-link next"><i class="fas fa-chevron-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Inicializar AOS (Animate on Scroll)
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+        
+        // Manipulação do slider de experiência
+        const experienceSlider = document.getElementById('experience-slider');
+        const experienceValue = document.getElementById('experience-value');
+        
+        experienceSlider.addEventListener('input', function() {
+            experienceValue.textContent = this.value + ' anos';
+        });
+        
+        // Dropdown de ordenação
+        const sortButton = document.querySelector('.sort-button');
+        const sortDropdown = document.querySelector('.sort-dropdown');
+        
+        sortButton.addEventListener('click', function() {
+            sortDropdown.classList.toggle('open');
+        });
+        
+        // Fechar dropdown ao clicar fora dele
+        document.addEventListener('click', function(event) {
+            if (!sortDropdown.contains(event.target)) {
+                sortDropdown.classList.remove('open');
+            }
+        });
+        
+        // Opções de ordenação
+        const sortOptions = document.querySelectorAll('.sort-option');
+        const sortText = document.querySelector('.sort-button strong');
+        
+        sortOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const sortValue = this.getAttribute('data-sort');
+                const sortName = this.textContent;
+                
+                sortText.textContent = sortName;
+                sortDropdown.classList.remove('open');
+                
+                // Aqui você pode adicionar a lógica para reordenar os serviços
+                // Por exemplo, enviar uma requisição AJAX para o backend com o parâmetro de ordenação
+                console.log('Ordenando por: ' + sortValue);
+                
+                // Simulação de reordenação (apenas para demonstração)
+                const servicesGrid = document.querySelector('.services-grid');
+                const serviceCards = Array.from(servicesGrid.querySelectorAll('.service-card'));
+                
+                // Reordenar os cards com base no critério selecionado
+                // Isso seria substituído pela lógica do PHP/backend
+                if (sortValue === 'price-asc') {
+                    serviceCards.sort((a, b) => {
+                        const priceA = parseFloat(a.querySelector('.service-price').textContent.replace('R$ ', ''));
+                        const priceB = parseFloat(b.querySelector('.service-price').textContent.replace('R$ ', ''));
+                        return priceA - priceB;
+                    });
+                } else if (sortValue === 'price-desc') {
+                    serviceCards.sort((a, b) => {
+                        const priceA = parseFloat(a.querySelector('.service-price').textContent.replace('R$ ', ''));
+                        const priceB = parseFloat(b.querySelector('.service-price').textContent.replace('R$ ', ''));
+                        return priceB - priceA;
+                    });
+                } else if (sortValue === 'rating') {
+                    serviceCards.sort((a, b) => {
+                        const ratingA = parseFloat(a.querySelector('.service-rating').textContent.trim().split(' ')[0]);
+                        const ratingB = parseFloat(b.querySelector('.service-rating').textContent.trim().split(' ')[0]);
+                        return ratingB - ratingA;
+                    });
+                } else if (sortValue === 'experience') {
+                    serviceCards.sort((a, b) => {
+                        const expA = parseInt(a.querySelector('.meta-item').textContent.replace(' anos exp.', ''));
+                        const expB = parseInt(b.querySelector('.meta-item').textContent.replace(' anos exp.', ''));
+                        return expB - expA;
+                    });
+                }
+                
+                // Remover os cards existentes
+                servicesGrid.innerHTML = '';
+                
+                // Adicionar os cards reordenados
+                serviceCards.forEach(card => {
+                    servicesGrid.appendChild(card);
+                });
+            });
+        });
+        
+        // Manipulação dos filtros
+        const filterBtn = document.querySelector('.filter-btn');
+        
+        filterBtn.addEventListener('click', function() {
+            // Coletar valores dos filtros
+            const experienceValue = document.getElementById('experience-slider').value;
+            const priceMin = document.getElementById('price-min').value;
+            const priceMax = document.getElementById('price-max').value;
+            
+            const selectedTimes = Array.from(document.querySelectorAll('input[name="time"]:checked'))
+                .map(checkbox => checkbox.value);
+            
+            // Criar objeto com os dados do filtro para enviar ao backend
+            const filterData = {
+                experience: experienceValue,
+                priceMin: priceMin,
+                priceMax: priceMax,
+                times: selectedTimes
+            };
+            
+            console.log('Aplicando filtros:', filterData);
+            
+            // Aqui você adicionaria o código para enviar esses dados ao PHP
+            // via AJAX ou um formulário, para filtrar os resultados
+            // Por exemplo:
+            
+            // Simulação de filtragem (apenas para demonstração)
+            const servicesGrid = document.querySelector('.services-grid');
+            const serviceCards = Array.from(servicesGrid.querySelectorAll('.service-card'));
+            
+            serviceCards.forEach(card => {
+                const cardExp = parseInt(card.querySelector('.meta-item').textContent.replace(' anos exp.', ''));
+                const cardPrice = parseFloat(card.querySelector('.service-price').textContent.replace('R$ ', ''));
+                const cardTimes = card.querySelector('.meta-item:nth-child(2)').textContent;
+                
+                let showCard = true;
+                
+                // Filtrar por experiência
+                if (experienceValue > 0 && cardExp < experienceValue) {
+                    showCard = false;
+                }
+                
+                // Filtrar por preço mínimo
+                if (priceMin && cardPrice < priceMin) {
+                    showCard = false;
+                }
+                
+                // Filtrar por preço máximo
+                if (priceMax && cardPrice > priceMax) {
+                    showCard = false;
+                }
+                
+                // Filtrar por horários (simplificado - na implementação real seria mais complexo)
+                if (selectedTimes.length > 0) {
+                    const hasMatchingTime = selectedTimes.some(time => {
+                        const timeMap = {
+                            'morning': 'Manhãs',
+                            'afternoon': 'Tardes',
+                            'evening': 'Noites',
+                            'weekend': 'Fins de semana',
+                            'flexible': 'Flexível'
+                        };
+                        
+                        return cardTimes.includes(timeMap[time]);
+                    });
+                    
+                    if (!hasMatchingTime) {
+                        showCard = false;
+                    }
+                }
+                
+                // Mostrar ou esconder o card
+                card.style.display = showCard ? 'flex' : 'none';
+            });
+            
+            // Atualizar contagem de resultados
+            const visibleCards = serviceCards.filter(card => card.style.display !== 'none');
+            document.querySelector('.found-count strong').textContent = visibleCards.length;
+            
+            // Mostrar mensagem de nenhum resultado se necessário
+            const noResultsEl = document.querySelector('.no-results');
+            if (visibleCards.length === 0) {
+                if (!noResultsEl) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.innerHTML = `
+                        <h2>Nenhum serviço encontrado</h2>
+                        <p>Tente ajustar seus filtros ou realizar uma nova busca com termos diferentes.</p>
+                    `;
+                    servicesGrid.after(noResults);
+                }
+            } else if (noResultsEl) {
+                noResultsEl.remove();
+            }
+        });
+        
+        // Funcionalidade de pesquisa
+        const searchBtn = document.querySelector('.search-btn');
+        const searchInput = document.querySelector('.search-input');
+        
+        searchBtn.addEventListener('click', function() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            
+            if (!searchTerm) return;
+            
+            console.log('Pesquisando por:', searchTerm);
+            
+            // Simulação de pesquisa (seria substituído pelo PHP/backend)
+            const servicesGrid = document.querySelector('.services-grid');
+            const serviceCards = Array.from(servicesGrid.querySelectorAll('.service-card'));
+            
+            serviceCards.forEach(card => {
+                const title = card.querySelector('.service-title').textContent.toLowerCase();
+                const description = card.querySelector('.service-description').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Atualizar contagem de resultados
+            const visibleCards = serviceCards.filter(card => card.style.display !== 'none');
+            document.querySelector('.found-count strong').textContent = visibleCards.length;
+            
+            // Mostrar mensagem de nenhum resultado se necessário
+            const noResultsEl = document.querySelector('.no-results');
+            if (visibleCards.length === 0) {
+                if (!noResultsEl) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.innerHTML = `
+                        <h2>Nenhum serviço encontrado</h2>
+                        <p>Tente ajustar sua pesquisa ou procurar com palavras-chave diferentes.</p>
+                    `;
+                    servicesGrid.after(noResults);
+                }
+            } else if (noResultsEl) {
+                noResultsEl.remove();
+            }
+        });
+        
+        // Permitir pesquisa ao pressionar Enter
+        searchInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+        
+        // Funcionalidade para paginação
+        const pageLinks = document.querySelectorAll('.page-link');
+        
+        pageLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remover classe ativa de todos os links
+                pageLinks.forEach(pl => pl.classList.remove('active'));
+                
+                // Adicionar classe ativa apenas ao link clicado (exceto prev/next)
+                if (!this.classList.contains('prev') && !this.classList.contains('next')) {
+                    this.classList.add('active');
+                }
+                
+                // Aqui você adicionaria o código para carregar os dados da página correspondente
+                // via AJAX ou redirecionar para a URL da página
+                console.log('Navegando para página:', this.textContent);
+                
+                // Simular carregamento de página (apenas para demonstração)
+                window.scrollTo({
+                    top: document.querySelector('.services-hero').offsetTop,
+                    behavior: 'smooth'
+                });
+            });
+        });

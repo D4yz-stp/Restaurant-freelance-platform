@@ -1,0 +1,215 @@
+/* =================================================================
+   RODAPÉ (FOOTER)
+================================================================= */
+.main-footer {
+    background: var(--color-accent);
+    color: var(--color-primary);
+    padding: 4rem 0 2rem;
+}
+
+.footer-top {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.footer-title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Link para telefone com ícone */
+.phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    transition: color var(--transition);
+}
+
+.phone-link:hover {
+    color: var(--color-primary-dark);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.footer-col {
+    padding: 1rem;
+}
+
+.footer-col h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Lista de links no rodapé */
+.footer-links {
+    list-style: none;
+}
+
+.footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+    color: var(--color-primary);
+    text-decoration: none;
+    position: relative;
+}
+
+.footer-links a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: var(--color-primary);
+    transition: width var(--transition);
+}
+
+.footer-links a:hover::after {
+    width: 100%;
+}
+
+/* Link para email */
+.email-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Ícones de redes sociais */
+.social-icons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.social-icons a {
+    color: var(--color-primary);
+    transition: transform var(--transition);
+    display: flex;
+    align-items: center;
+}
+
+.social-icons a:hover {
+    transform: translateY(-3px);
+}
+
+/* Formulário de newsletter */
+.newsletter-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.newsletter-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    font-family: inherit;
+}
+
+/* Seletor de idiomas */
+.language-switcher {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.language-switcher a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition);
+}
+
+.language-switcher a.active {
+    background: var(--color-primary);
+    color: var(--color-accent);
+}
+
+.language-switcher a:hover:not(.active) {
+    background: rgba(0, 35, 102, 0.1);
+}
+
+/* Rodapé legal e copyright */
+.footer-legal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 35, 102, 0.2);
+}
+
+.back-to-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform var(--transition);
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+}
+
+.copyright {
+    font-size: 0.875rem;
+    color: var(--color-primary);
+}
+/* =================================================================
+   ESTILOS RESPONSIVOS (MEDIA QUERIES)
+================================================================= */
+@media (max-width: 768px) {
+    
+    .footer-legal {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .newsletter-form button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --container-padding: 1rem;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =================================================================
+   ANIMAÇÕES
+================================================================= */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}

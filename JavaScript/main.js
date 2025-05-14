@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Mobile menu toggle
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
+/*    const menuToggle = document.querySelector('.mobile-menu-toggle');
     if (menuToggle) {
         menuToggle.addEventListener('click', function() {
             const expanded = this.getAttribute('aria-expanded') === 'true';
@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Implementar quando criar o menu móvel completo
         });
     }
+*/
     
     // Smooth scroll para links internos
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Form submission (newsletter)
+    // Form submission (newsletter) -- pd ser deletado sinceramente
     const newsletterForm = document.querySelector('.newsletter-form');
     if (newsletterForm) {
         newsletterForm.addEventListener('submit', function(e) {

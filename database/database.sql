@@ -370,3 +370,4 @@ CREATE TABLE Settings (
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
