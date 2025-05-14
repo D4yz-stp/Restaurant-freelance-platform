@@ -1,3 +1,26 @@
+-- DROP TABLE statements em ordem específica para evitar violação de constraints
+DROP TABLE IF EXISTS Reviews;
+DROP TABLE IF EXISTS Payments;
+DROP TABLE IF EXISTS Contracts;
+DROP TABLE IF EXISTS Messages;
+DROP TABLE IF EXISTS Conversations;
+DROP TABLE IF EXISTS FreelancerLanguages;
+DROP TABLE IF EXISTS Languages;
+DROP TABLE IF EXISTS FreelancerSkills;
+DROP TABLE IF EXISTS Skills;
+DROP TABLE IF EXISTS ServiceStaffSpecializations;
+DROP TABLE IF EXISTS BartenderSpecializations;
+DROP TABLE IF EXISTS CleaningSpecializations;
+DROP TABLE IF EXISTS ChefSpecializations;
+DROP TABLE IF EXISTS Services;
+DROP TABLE IF EXISTS ServiceCategories;
+DROP TABLE IF EXISTS RestaurantProfiles;
+DROP TABLE IF EXISTS FreelancerProfiles;
+DROP TABLE IF EXISTS UserRoles;
+DROP TABLE IF EXISTS Roles;
+DROP TABLE IF EXISTS Users;
+
+
 -- Tabela de Usuários
 CREATE TABLE Users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -217,3 +240,84 @@ CREATE TABLE FreelancerLanguages (
     FOREIGN KEY (language_id) REFERENCES Languages(language_id) ON DELETE CASCADE,
     UNIQUE(freelancer_id, language_id)
 );
+
+-- Inserindo papéis básicos
+INSERT INTO Roles (role_name) VALUES 
+('freelancer'),
+('restaurant'),
+('admin');
+
+-- Inserindo usuários
+INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
+('João', 'Silva', 'joao.silva@email.com', 'hash123', '(11) 99999-0000', 'Brasil', 'São Paulo'),
+('Maria', 'Rodrigues', 'maria.rodrigues@email.com', 'hash456', '(11) 88888-1111', 'Brasil', 'Rio de Janeiro'),
+('Pedro', 'Gomes', 'pedro.gomes@email.com', 'hash789', '(12) 77777-2222', 'Brasil', 'Curitiba'),
+('Ana', 'Souza', 'ana.souza@email.com', 'hash012', '(13) 66666-3333', 'Brasil', 'Salvador'),
+('Carlos', 'Oliveira', 'carlos.oliveira@email.com', 'hash345', '(14) 55555-4444', 'Brasil', 'Belo Horizonte');
+
+-- Atribuindo papéis aos usuários
+INSERT INTO UserRoles (user_id, role_id) VALUES
+(1, 1), -- João é freelancer
+(2, 2), -- Maria é restaurante
+(3, 1), -- Pedro é freelancer
+(4, 2), -- Ana é restaurante
+(5, 1); -- Carlos é freelancer
+
+-- Criando perfis de freelancers
+INSERT INTO FreelancerProfiles (user_id, hourly_rate, availability, experience_years, avg_rating) VALUES
+(1, 100.00, 'flexível', 5, 4.8),
+(3, 120.00, 'manhã/tarde', 7, 4.9),
+(5, 90.00, 'flexível', 3, 4.5);
+
+-- Criando perfis de restaurantes
+INSERT INTO RestaurantProfiles (user_id, restaurant_name, restaurant_type, description, avg_rating) VALUES
+(2, 'Restaurante Bistrô', 'Francesa', 'Cozinha gourmet francesa contemporânea', 4.7),
+(4, 'O Paparico', 'Brasileira', 'Comida típica brasileira com toque moderno', 4.6);
+
+-- Inserindo categorias de serviços
+INSERT INTO ServiceCategories (name, description) VALUES
+('Cozinha', 'Serviços relacionados à preparação de alimentos'),
+('Limpeza', 'Serviços de limpeza profissional'),
+('Atendimento', 'Serviços de garçom e atendimento ao cliente'),
+('Bares', 'Serviços de bar e mixologia');
+
+-- Inserindo habilidades disponíveis
+INSERT INTO Skills (skill_name, description) VALUES
+('Cozinha Francesa', 'Especialização em culinária francesa'),
+('Cozinha Brasileira', 'Conhecimento profundo da gastronomia brasileira'),
+('Limpeza Industrial', 'Experiência com limpeza em ambientes comerciais'),
+('Atendimento Premium', 'Experiência em atendimento de luxo'),
+('Mixologia Avançada', 'Especialização em coquetéis artesanais');
+
+-- Associando habilidades aos freelancers
+INSERT INTO FreelancerSkills (freelancer_id, skill_id, proficiency_level) VALUES
+(1, 1, 'avançado'), -- João: Cozinha Francesa
+(1, 2, 'intermediário'), -- João: Cozinha Brasileira
+(2, 3, 'avançado'), -- Pedro: Limpeza Industrial
+(2, 4, 'básico'), -- Pedro: Atendimento Premium
+(3, 5, 'avançado'); -- Carlos: Mixologia Avançada
+
+-- Criando serviços oferecidos pelos freelancers
+INSERT INTO Services (freelancer_id, category_id, title, description, price_type, base_price) VALUES
+(1, 1, 'Chef Francês Experiente', 'Serviço completo de cozinha francesa gourmet', 'hora', 150.00),
+(2, 2, 'Limpeza Profissional', 'Serviço especializado em limpeza industrial', 'projeto', 500.00),
+(3, 4, 'Barman Especializado', 'Serviço premium de bartender para eventos', 'evento', 800.00);
+
+-- Criando contratos entre restaurantes e freelancers
+INSERT INTO Contracts (restaurant_id, freelancer_id, service_id, title, description, agreed_price, payment_type, start_date, end_date, status) VALUES
+(1, 1, 1, 'Contrato Chef Temporário', 'Serviço de chef francês para evento especial', 1200.00, 'projeto', '2025-03-01', '2025-03-31', 'ativo'),
+(1, 2, NULL, 'Contrato de Limpeza Diária', 'Serviço diário de limpeza do restaurante', 2500.00, 'mensal', '2025-03-01', NULL, 'ativo'),
+(2, 3, 3, 'Contrato Barman Eventos', 'Serviço de barman para eventos especiais', 1000.00, 'evento', '2025-03-15', '2025-03-15', 'ativo');
+
+-- Inserindo pagamentos
+INSERT INTO Payments (contract_id, amount, payment_method, status, transaction_date) VALUES
+(1, 600.00, 'cartão', 'pago', '2025-03-01'),
+(1, 600.00, 'transferência', 'pendente', '2025-03-15'),
+(2, 1250.00, 'boleto', 'pago', '2025-03-05'),
+(3, 1000.00, 'pix', 'pago', '2025-03-10');
+
+-- Inserindo avaliações
+INSERT INTO Reviews (contract_id, reviewer_id, reviewee_id, overall_rating, comment, created_at) VALUES
+(1, 2, 1, 5, 'Excelente serviço prestado pelo chef!', '2025-03-10'),
+(2, 2, 2, 4, 'Serviço bom, mas com pequenos ajustes necessários.', '2025-03-12'),
+(3, 4, 3, 5, 'Barman muito profissional e criativo!', '2025-03-16');
