@@ -241,83 +241,142 @@ CREATE TABLE FreelancerLanguages (
     UNIQUE(freelancer_id, language_id)
 );
 
--- Inserindo papéis básicos
-INSERT INTO Roles (role_name) VALUES 
+ALTER TABLE Users ADD COLUMN profile_image_url TEXT;
+
+ALTER TABLE Services ADD COLUMN service_image_url TEXT;
+
+ALTER TABLE FreelancerProfiles ADD COLUMN review_count INTEGER DEFAULT 0;
+
+ALTER TABLE FreelancerProfiles ADD COLUMN availability_details TEXT;
+
+-- Inserir dados na tabela Users
+INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
+('João', 'Silva', 'joao.silva@example.com', 'hashed_password_1', '11987654321', 'Brasil', 'São Paulo'),
+('Maria', 'Souza', 'maria.souza@example.com', 'hashed_password_2', '21987654321', 'Brasil', 'Rio de Janeiro'),
+('Carlos', 'Oliveira', 'carlos.oliveira@example.com', 'hashed_password_3', '31987654321', 'Brasil', 'Belo Horizonte'),
+('Ana', 'Pereira', 'ana.pereira@example.com', 'hashed_password_4', '41987654321', 'Brasil', 'Curitiba'),
+('Pedro', 'Almeida', 'pedro.almeida@example.com', 'hashed_password_5', '51987654321', 'Brasil', 'Porto Alegre');
+
+-- Inserir dados na tabela Roles
+INSERT INTO Roles (role_name) VALUES
 ('freelancer'),
 ('restaurant'),
 ('admin');
 
--- Inserindo usuários
-INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
-('João', 'Silva', 'joao.silva@email.com', 'hash123', '(11) 99999-0000', 'Brasil', 'São Paulo'),
-('Maria', 'Rodrigues', 'maria.rodrigues@email.com', 'hash456', '(11) 88888-1111', 'Brasil', 'Rio de Janeiro'),
-('Pedro', 'Gomes', 'pedro.gomes@email.com', 'hash789', '(12) 77777-2222', 'Brasil', 'Curitiba'),
-('Ana', 'Souza', 'ana.souza@email.com', 'hash012', '(13) 66666-3333', 'Brasil', 'Salvador'),
-('Carlos', 'Oliveira', 'carlos.oliveira@email.com', 'hash345', '(14) 55555-4444', 'Brasil', 'Belo Horizonte');
-
--- Atribuindo papéis aos usuários
+-- Inserir dados na tabela UserRoles
 INSERT INTO UserRoles (user_id, role_id) VALUES
-(1, 1), -- João é freelancer
-(2, 2), -- Maria é restaurante
-(3, 1), -- Pedro é freelancer
-(4, 2), -- Ana é restaurante
-(5, 1); -- Carlos é freelancer
+(1, 1), -- João Silva é freelancer
+(2, 2), -- Maria Souza é restaurante
+(3, 1), -- Carlos Oliveira é freelancer
+(4, 2), -- Ana Pereira é restaurante
+(5, 3); -- Pedro Almeida é admin
 
--- Criando perfis de freelancers
+-- Inserir dados na tabela FreelancerProfiles
 INSERT INTO FreelancerProfiles (user_id, hourly_rate, availability, experience_years, avg_rating) VALUES
-(1, 100.00, 'flexível', 5, 4.8),
-(3, 120.00, 'manhã/tarde', 7, 4.9),
-(5, 90.00, 'flexível', 3, 4.5);
+(1, 50.00, 'flexible', 5, 4.5),
+(3, 45.00, 'part-time', 3, 4.2);
 
--- Criando perfis de restaurantes
+-- Inserir dados na tabela RestaurantProfiles
 INSERT INTO RestaurantProfiles (user_id, restaurant_name, restaurant_type, description, avg_rating) VALUES
-(2, 'Restaurante Bistrô', 'Francesa', 'Cozinha gourmet francesa contemporânea', 4.7),
-(4, 'O Paparico', 'Brasileira', 'Comida típica brasileira com toque moderno', 4.6);
+(2, 'Sabor Brasileiro', 'Brasileira', 'Restaurante com comidas típicas brasileiras', 4.7),
+(4, 'Gourmet Italiano', 'Italiana', 'Culinária italiana autêntica', 4.5);
 
--- Inserindo categorias de serviços
+-- Inserir dados na tabela ServiceCategories
 INSERT INTO ServiceCategories (name, description) VALUES
-('Cozinha', 'Serviços relacionados à preparação de alimentos'),
-('Limpeza', 'Serviços de limpeza profissional'),
-('Atendimento', 'Serviços de garçom e atendimento ao cliente'),
-('Bares', 'Serviços de bar e mixologia');
+('Culinária', 'Serviços relacionados à preparação de alimentos'),
+('Limpeza', 'Serviços de limpeza e higienização'),
+('Bartending', 'Serviços de preparação de bebidas'),
+('Atendimento', 'Serviços de atendimento ao cliente');
 
--- Inserindo habilidades disponíveis
+-- Inserir dados na tabela Skills
 INSERT INTO Skills (skill_name, description) VALUES
-('Cozinha Francesa', 'Especialização em culinária francesa'),
-('Cozinha Brasileira', 'Conhecimento profundo da gastronomia brasileira'),
-('Limpeza Industrial', 'Experiência com limpeza em ambientes comerciais'),
-('Atendimento Premium', 'Experiência em atendimento de luxo'),
-('Mixologia Avançada', 'Especialização em coquetéis artesanais');
+('Cozinhar', 'Habilidade em preparar alimentos'),
+('Limpeza Profissional', 'Habilidade em limpeza profissional'),
+('Mixologia', 'Habilidade em preparar coquetéis'),
+('Atendimento ao Cliente', 'Habilidade em atender clientes');
 
--- Associando habilidades aos freelancers
+-- Inserir dados na tabela FreelancerSkills
 INSERT INTO FreelancerSkills (freelancer_id, skill_id, proficiency_level) VALUES
-(1, 1, 'avançado'), -- João: Cozinha Francesa
-(1, 2, 'intermediário'), -- João: Cozinha Brasileira
-(2, 3, 'avançado'), -- Pedro: Limpeza Industrial
-(2, 4, 'básico'), -- Pedro: Atendimento Premium
-(3, 5, 'avançado'); -- Carlos: Mixologia Avançada
+(1, 1, 'Avançado'),
+(1, 4, 'Intermediário'),
+(3, 1, 'Intermediário'),
+(3, 2, 'Avançado');
 
--- Criando serviços oferecidos pelos freelancers
-INSERT INTO Services (freelancer_id, category_id, title, description, price_type, base_price) VALUES
-(1, 1, 'Chef Francês Experiente', 'Serviço completo de cozinha francesa gourmet', 'hora', 150.00),
-(2, 2, 'Limpeza Profissional', 'Serviço especializado em limpeza industrial', 'projeto', 500.00),
-(3, 4, 'Barman Especializado', 'Serviço premium de bartender para eventos', 'evento', 800.00);
+-- Inserir dados na tabela Services
+INSERT INTO Services (freelancer_id, category_id, title, description, price_type, base_price, is_active) VALUES
+(1, 1, 'Chef Particular', 'Serviço de chef particular para eventos', 'por hora', 750.00, 1),
+(1, 4, 'Garçom Profissional', 'Serviço de garçom para eventos', 'por hora', 30.00, 1),
+(2, 2, 'Limpeza Profissional', 'Serviço de limpeza profissional', 'por hora', 25.00, 1);
 
--- Criando contratos entre restaurantes e freelancers
+-- Inserir dados na tabela Contracts
 INSERT INTO Contracts (restaurant_id, freelancer_id, service_id, title, description, agreed_price, payment_type, start_date, end_date, status) VALUES
-(1, 1, 1, 'Contrato Chef Temporário', 'Serviço de chef francês para evento especial', 1200.00, 'projeto', '2025-03-01', '2025-03-31', 'ativo'),
-(1, 2, NULL, 'Contrato de Limpeza Diária', 'Serviço diário de limpeza do restaurante', 2500.00, 'mensal', '2025-03-01', NULL, 'ativo'),
-(2, 3, 3, 'Contrato Barman Eventos', 'Serviço de barman para eventos especiais', 1000.00, 'evento', '2025-03-15', '2025-03-15', 'ativo');
+(1, 1, 1, 'Evento de Aniversário', 'Serviço de chef particular para evento de aniversário', 1000.00, 'cartão', '2023-10-15 18:00:00', '2023-10-15 23:00:00', 'concluído'),
+(2, 3, 3, 'Limpeza Semanal', 'Serviço de limpeza semanal', 500.00, 'dinheiro', '2023-10-10 08:00:00', '2023-10-10 12:00:00', 'ativo');
 
--- Inserindo pagamentos
-INSERT INTO Payments (contract_id, amount, payment_method, status, transaction_date) VALUES
-(1, 600.00, 'cartão', 'pago', '2025-03-01'),
-(1, 600.00, 'transferência', 'pendente', '2025-03-15'),
-(2, 1250.00, 'boleto', 'pago', '2025-03-05'),
-(3, 1000.00, 'pix', 'pago', '2025-03-10');
+-- Inserir dados na tabela Payments
+INSERT INTO Payments (contract_id, amount, payment_method, status) VALUES
+(1, 1000.00, 'cartão', 'concluído'),
+(2, 500.00, 'dinheiro', 'pendente');
 
--- Inserindo avaliações
-INSERT INTO Reviews (contract_id, reviewer_id, reviewee_id, overall_rating, comment, created_at) VALUES
-(1, 2, 1, 5, 'Excelente serviço prestado pelo chef!', '2025-03-10'),
-(2, 2, 2, 4, 'Serviço bom, mas com pequenos ajustes necessários.', '2025-03-12'),
-(3, 4, 3, 5, 'Barman muito profissional e criativo!', '2025-03-16');
+-- Inserir dados na tabela Reviews
+INSERT INTO Reviews (contract_id, reviewer_id, reviewee_id, overall_rating, comment) VALUES
+(1, 2, 1, 5, 'Excelente serviço!'),
+(1, 1, 2, 4, 'Ótimo evento!');
+
+-- Inserir dados na tabela Conversations
+INSERT INTO Conversations (restaurant_id, freelancer_id) VALUES
+(1, 1),
+(2, 3);
+
+-- Inserir dados na tabela Messages
+INSERT INTO Messages (conversation_id, sender_id, message_text) VALUES
+(1, 1, 'Olá, gostaria de contratar seus serviços.'),
+(1, 2, 'Olá, ficarei feliz em ajudar. Quando será o evento?'),
+(2, 3, 'Bom dia, preciso de um serviço de limpeza.'),
+(2, 4, 'Bom dia, qual o horário desejado?');
+
+-- Inserir dados na tabela ChefSpecializations
+INSERT INTO ChefSpecializations (freelancer_id, cuisine_type, certifications, dietary_specialties, menu_planning, catering_experience) VALUES
+(1, 'Brasileira', 'Certificado em Culinária Brasileira', 'Vegetariana', 1, 1);
+
+-- Inserir dados na tabela CleaningSpecializations
+INSERT INTO CleaningSpecializations (freelancer_id, kitchen_cleaning, dining_area_cleaning, equipment_experience, eco_friendly) VALUES
+(3, 1, 1, 'Máquinas de lavar louça', 1);
+
+-- Inserir dados na tabela BartenderSpecializations
+INSERT INTO BartenderSpecializations (freelancer_id, cocktail_specialist, wine_knowledge, beer_knowledge, flair_bartending, certifications) VALUES
+(1, 1, 1, 0, 0, 'Certificado em Mixologia');
+
+-- Inserir dados na tabela ServiceStaffSpecializations
+INSERT INTO ServiceStaffSpecializations (freelancer_id, fine_dining_experience, event_service, sommelier_knowledge, customer_service_rating) VALUES
+(1, 1, 1, 0, 5);
+
+-- Inserir dados na tabela Languages
+INSERT INTO Languages (language_name) VALUES
+('Português'),
+('Inglês'),
+('Espanhol');
+
+-- Inserir dados na tabela FreelancerLanguages
+INSERT INTO FreelancerLanguages (freelancer_id, language_id, proficiency) VALUES
+(1, 1, 'Nativo'),
+(1, 2, 'Avançado'),
+(3, 1, 'Nativo'),
+(3, 3, 'Intermediário');
+
+-- Atualizar URLs de imagens e contagem de reviews
+UPDATE Users SET profile_image_url = 'https://example.com/joao.jpg' WHERE user_id = 1;
+UPDATE Users SET profile_image_url = 'https://example.com/maria.jpg' WHERE user_id = 2;
+UPDATE Users SET profile_image_url = 'https://example.com/carlos.jpg' WHERE user_id = 3;
+UPDATE Users SET profile_image_url = 'https://example.com/ana.jpg' WHERE user_id = 4;
+UPDATE Users SET profile_image_url = 'https://example.com/pedro.jpg' WHERE user_id = 5;
+
+UPDATE Services SET service_image_url = 'https://example.com/chef.jpg' WHERE service_id = 1;
+UPDATE Services SET service_image_url = 'https://example.com/garcom.jpg' WHERE service_id = 2;
+UPDATE Services SET service_image_url = 'https://example.com/limpeza.jpg' WHERE service_id = 3;
+
+UPDATE FreelancerProfiles SET review_count = 10 WHERE profile_id = 1;
+UPDATE FreelancerProfiles SET review_count = 5 WHERE profile_id = 2;
+
+UPDATE FreelancerProfiles SET availability_details = 'Disponível nos finais de semana' WHERE profile_id = 1;
+UPDATE FreelancerProfiles SET availability_details = 'Disponível durante a semana' WHERE profile_id = 2;
