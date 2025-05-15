@@ -9,55 +9,40 @@ try {
 
 // Obtenção dos filtros da URL (se houver)
 $experienceMin = isset($_GET['exp_min']) ? intval($_GET['exp_min']) : 0;
-$priceMin = isset($_GET['price_min']) ? floatval($_GET['price_min']) : null;
-$priceMax = isset($_GET['price_max']) ? floatval($_GET['price_max']) : null;
+$priceMin = isset($_GET['price_min']) && $_GET['price_min'] !== '' ? floatval($_GET['price_min']) : null;
+$priceMax = isset($_GET['price_max']) && $_GET['price_max'] !== '' ? floatval($_GET['price_max']) : null;
 $availability = isset($_GET['availability']) && is_array($_GET['availability']) ? $_GET['availability'] : [];
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'relevance';
 
-// Construção da consulta SQL com filtros
-$query = "SELECT
-    u.user_id,
+// Construção da consulta SQL base
+$query = "SELECT 
+    s.service_id,
+    s.title AS service_title,
+    s.description AS service_description,
+    s.base_price,
+    s.price_type,
+    s.service_image_url,
     u.first_name,
     u.last_name,
-    fp.hourly_rate,
-    fp.availability,
+    u.profile_image_url,
     fp.experience_years,
+    fp.availability,
+    fp.availability_details,
     fp.avg_rating,
-    s.service_id,
-    s.title,
-    s.description,
-    s.price_type,
-    s.base_price,
-    sc.name AS category_name,
-    COALESCE(
-        (SELECT COUNT(*) 
-         FROM Reviews r 
-         WHERE r.service_id = s.service_id),
-        0
-    ) as review_count,
-    GROUP_CONCAT(DISTINCT sk.skill_name, ', ') AS skills,
-    GROUP_CONCAT(DISTINCT l.language_name, ', ') AS languages,
-    CASE
-        WHEN cs.freelancer_id IS NOT NULL THEN 'Chef'
-        WHEN cls.cleaning_id IS NOT NULL THEN 'Limpeza'
-        WHEN bts.bartender_id IS NOT NULL THEN 'Bar'
-        WHEN sss.service_staff_id IS NOT NULL THEN 'Atendimento'
-        ELSE 'Outro'
-    END AS specialization_type
-FROM Users u
-JOIN FreelancerProfiles fp ON u.user_id = fp.user_id
-JOIN Services s ON fp.profile_id = s.freelancer_id
-LEFT JOIN ServiceCategories sc ON s.category_id = sc.category_id
-LEFT JOIN FreelancerSkills fs ON fp.profile_id = fs.freelancer_id
-LEFT JOIN Skills sk ON fs.skill_id = sk.skill_id
-LEFT JOIN FreelancerLanguages fl ON fp.profile_id = fl.freelancer_id
-LEFT JOIN Languages l ON fl.language_id = l.language_id
-LEFT JOIN ChefSpecializations cs ON fp.profile_id = cs.freelancer_id
-LEFT JOIN CleaningSpecializations cls ON fp.profile_id = cls.cleaning_id
-LEFT JOIN BartenderSpecializations bts ON fp.profile_id = bts.bartender_id
-LEFT JOIN ServiceStaffSpecializations sss ON fp.profile_id = sss.service_staff_id
-WHERE 1=1";
+    fp.review_count
+FROM 
+    Services s
+JOIN 
+    FreelancerProfiles fp ON s.freelancer_id = fp.profile_id
+JOIN 
+    Users u ON fp.user_id = u.user_id
+LEFT JOIN 
+    FreelancerSkills fs ON fp.profile_id = fs.freelancer_id
+LEFT JOIN 
+    Skills sk ON fs.skill_id = sk.skill_id
+WHERE 
+    s.is_active = 1";
 
 // Adiciona condições para filtros
 if ($experienceMin > 0) {
@@ -91,13 +76,13 @@ if (!empty($search)) {
 }
 
 // Agrupar resultados por usuário e serviço
-$query .= " GROUP BY u.user_id, s.service_id";
+$query .= " GROUP BY s.service_id";
 
 // Adicionar ordenação
 $orderParams = [];
 switch ($sort) {
     case 'rating':
-        $query .= " ORDER BY fp.avg_rating DESC";
+        $query .= " ORDER BY fp.avg_rating DESC, fp.review_count DESC";
         break;
     case 'price-asc':
         $query .= " ORDER BY s.base_price ASC";
@@ -120,24 +105,29 @@ switch ($sort) {
                        fp.avg_rating DESC";
             $orderParams[':search_order'] = "%$search%";
         } else {
-            $query .= " ORDER BY fp.avg_rating DESC";
+            $query .= " ORDER BY fp.avg_rating DESC, fp.review_count DESC";
         }
         break;
 }
 
-// Paginação
+// Preparação para paginação
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $perPage = 9; // Serviços por página
 $offset = ($page - 1) * $perPage;
 
-// Abordagem alternativa para contagem
-// Em vez de usar uma subconsulta complexa, contamos apenas os IDs distintos
-$countQuery = "SELECT COUNT(DISTINCT s.service_id) as total FROM Users u
-JOIN FreelancerProfiles fp ON u.user_id = fp.user_id
-JOIN Services s ON fp.profile_id = s.freelancer_id
-LEFT JOIN FreelancerSkills fs ON fp.profile_id = fs.freelancer_id
-LEFT JOIN Skills sk ON fs.skill_id = sk.skill_id
-WHERE 1=1";
+// Consulta para contagem total de resultados
+$countQuery = "SELECT COUNT(DISTINCT s.service_id) as total FROM 
+    Services s
+JOIN 
+    FreelancerProfiles fp ON s.freelancer_id = fp.profile_id
+JOIN 
+    Users u ON fp.user_id = u.user_id
+LEFT JOIN 
+    FreelancerSkills fs ON fp.profile_id = fs.freelancer_id
+LEFT JOIN 
+    Skills sk ON fs.skill_id = sk.skill_id
+WHERE 
+    s.is_active = 1";
 
 // Adicionar as mesmas condições de filtro à consulta de contagem
 if ($experienceMin > 0) {
@@ -198,41 +188,64 @@ $stmt = $db->prepare($query);
 
 // Vincular parâmetros de filtro à consulta principal
 if ($experienceMin > 0) {
-    $stmt->bindParam(':exp_min', $experienceMin, PDO::PARAM_INT);
+    $stmt->bindValue(':exp_min', $experienceMin, PDO::PARAM_INT);
 }
 
 if ($priceMin !== null) {
-    $stmt->bindParam(':price_min', $priceMin, PDO::PARAM_STR);
+    $stmt->bindValue(':price_min', $priceMin, PDO::PARAM_STR);
 }
 
 if ($priceMax !== null) {
-    $stmt->bindParam(':price_max', $priceMax, PDO::PARAM_STR);
+    $stmt->bindValue(':price_max', $priceMax, PDO::PARAM_STR);
 }
 
-// Vincular parâmetros de disponibilidade
 foreach ($availabilityParams as $paramName => $paramValue) {
-    $stmt->bindParam($paramName, $paramValue, PDO::PARAM_STR);
+    $stmt->bindValue($paramName, $paramValue, PDO::PARAM_STR);
 }
 
 if (!empty($search)) {
     $searchParam = "%$search%";
-    $stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
-}
+    $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
 
-// Vincular parâmetros de ordenação
-foreach ($orderParams as $paramName => $paramValue) {
-    $stmt->bindParam($paramName, $paramValue, PDO::PARAM_STR);
+    
+    // Parâmetro adicional para ordenação por relevância
+    if ($sort === 'relevance' || empty($sort)) {
+        $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+
+    }
 }
 
 // Limites para paginação
-$stmt->bindParam(':limit', $perPage, PDO::PARAM_INT);
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+
+// Texto de Teste de Parametros, para ver se o filter funciona bem.
+/*
+echo "<pre>";
+echo "SQL: $sql\n";
+echo "Parâmetros:\n";
+var_dump([
+    'keyword' => $keyword ?? null,
+    'experienceMin' => $experienceMin ?? null,
+    'priceMin' => $priceMin ?? null,
+    'priceMax' => $priceMax ?? null,
+    'availabilityParams' => $availabilityParams ?? null,
+    'limit' => $perPage ?? null,
+    'offset' => $offset ?? null
+]);
+echo "</pre>";
+*/
 
 $stmt->execute();
 $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Função para formatar disponibilidade
 function formatAvailability($availability) {
+    if (empty($availability)) {
+        return 'Não especificado';
+    }
+    
     $availList = explode(',', $availability);
     $availMap = [
         'morning' => 'Manhãs',
@@ -290,6 +303,10 @@ function buildQueryURL($page = null, $additionalParams = []) {
     <link rel="stylesheet" href="../../Css/service.css">
 </head>
 <body>
+    <header>
+        <!-- Supondo que você tenha um header padrão incluído via CSS -->
+    </header>
+
     <main>
         <section class="services-hero">
             <div class="container">
@@ -314,6 +331,10 @@ function buildQueryURL($page = null, $additionalParams = []) {
                         <?php if (!empty($search)): ?>
                             <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
                         <?php endif; ?>
+                        <!-- Mantém a ordenação atual ao aplicar filtros -->
+                        <?php if (!empty($sort)): ?>
+                            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort); ?>">
+                        <?php endif; ?>
                         
                         <div class="filter-section">
                             <h4 class="filter-title">Experiência</h4>
@@ -337,24 +358,27 @@ function buildQueryURL($page = null, $additionalParams = []) {
                             <h4 class="filter-title">Horário disponível</h4>
                             <div class="checkbox-group">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="availability[]" value="morning" <?php echo is_array($availability) && in_array('morning', $availability) ? 'checked' : ''; ?>> Manhãs
+                                    <input type="checkbox" name="availability[]" value="morning" <?php echo in_array('morning', $availability) ? 'checked' : ''; ?>> Manhãs
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="availability[]" value="afternoon" <?php echo is_array($availability) && in_array('afternoon', $availability) ? 'checked' : ''; ?>> Tardes
+                                    <input type="checkbox" name="availability[]" value="afternoon" <?php echo in_array('afternoon', $availability) ? 'checked' : ''; ?>> Tardes
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="availability[]" value="evening" <?php echo is_array($availability) && in_array('evening', $availability) ? 'checked' : ''; ?>> Noites
+                                    <input type="checkbox" name="availability[]" value="evening" <?php echo in_array('evening', $availability) ? 'checked' : ''; ?>> Noites
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="availability[]" value="weekend" <?php echo is_array($availability) && in_array('weekend', $availability) ? 'checked' : ''; ?>> Fins de semana
+                                    <input type="checkbox" name="availability[]" value="weekend" <?php echo in_array('weekend', $availability) ? 'checked' : ''; ?>> Fins de semana
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="availability[]" value="flexible" <?php echo is_array($availability) && in_array('flexible', $availability) ? 'checked' : ''; ?>> Horário flexível
+                                    <input type="checkbox" name="availability[]" value="flexible" <?php echo in_array('flexible', $availability) ? 'checked' : ''; ?>> Horário flexível
                                 </label>
                             </div>
                         </div>
                         
-                        <button type="submit" class="filter-btn">Aplicar filtros</button>
+                        <div class="filter-buttons">
+                            <button type="submit" class="filter-btn">Aplicar filtros</button>
+                            <a href="?" class="reset-filters-btn">Limpar filtros</a>
+                        </div>
                     </form>
                 </aside>
                 
@@ -397,34 +421,40 @@ function buildQueryURL($page = null, $additionalParams = []) {
                             foreach ($services as $service):
                                 $delay += 100;
                                 
-                                // Use imagem padrão diretamente, já que não temos colunas para imagens
-                                $serviceImage = "/api/placeholder/600/400";
-                                $profileImage = "/api/placeholder/100/100";
+                                // Tratamento para imagens
+                                $serviceImage = !empty($service['service_image_url']) ? htmlspecialchars($service['service_image_url']) : "/api/placeholder/600/400";
+                                $profileImage = !empty($service['profile_image_url']) ? htmlspecialchars($service['profile_image_url']) : "/api/placeholder/100/100";
                                 
                                 // Formatações
-                                $fullName = $service['first_name'] . ' ' . $service['last_name'];
+                                $fullName = htmlspecialchars($service['first_name'] . ' ' . $service['last_name']);
                                 $price = number_format($service['base_price'], 2, ',', '.');
                                 $priceType = $service['price_type'] === 'hourly' ? '/hora' : '';
                                 $availability = formatAvailability($service['availability']);
                                 $rating = number_format($service['avg_rating'], 1, '.', '');
+                                
+                                // Limitar tamanho da descrição
+                                $description = htmlspecialchars($service['service_description']);
+                                if (strlen($description) > 120) {
+                                    $description = substr($description, 0, 117) . '...';
+                                }
                         ?>
                         <div class="service-card" data-aos="fade-up" data-aos-delay="<?php echo $delay; ?>">
                             <div class="service-image">
-                                <img src="<?php echo htmlspecialchars($serviceImage); ?>" alt="<?php echo htmlspecialchars($service['title']); ?>">
+                                <img src="<?php echo $serviceImage; ?>" alt="<?php echo htmlspecialchars($service['service_title']); ?>">
                                 <div class="service-provider">
-                                    <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="Avatar" class="provider-avatar">
-                                    <div class="provider-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                    <img src="<?php echo $profileImage; ?>" alt="Avatar" class="provider-avatar">
+                                    <div class="provider-name"><?php echo $fullName; ?></div>
                                 </div>
                             </div>
                             <div class="service-details">
-                                <h3 class="service-title"><?php echo htmlspecialchars($service['title']); ?></h3>
-                                <p class="service-description"><?php echo htmlspecialchars($service['description']); ?></p>
+                                <h3 class="service-title"><?php echo htmlspecialchars($service['service_title']); ?></h3>
+                                <p class="service-description"><?php echo $description; ?></p>
                                 <div class="service-meta">
                                     <div class="meta-item">
                                         <i class="fas fa-briefcase"></i> <?php echo $service['experience_years']; ?> anos exp.
                                     </div>
                                     <div class="meta-item">
-                                        <i class="fas fa-clock"></i> <?php echo htmlspecialchars($availability); ?>
+                                        <i class="fas fa-clock"></i> <?php echo $availability; ?>
                                     </div>
                                 </div>
                                 <div class="service-footer">
@@ -433,9 +463,11 @@ function buildQueryURL($page = null, $additionalParams = []) {
                                     </div>
                                     <div class="service-rating">
                                         <i class="fas fa-star rating-star"></i>
-                                        <?php echo $rating; ?> (<?php echo $service['review_count']; ?>)
+                                        <?php echo $rating; ?> 
+                                        <span class="review-count">(<?php echo $service['review_count']; ?>)</span>
                                     </div>
                                 </div>
+                                <a href="service-details.php?id=<?php echo $service['service_id']; ?>" class="service-link"></a>
                             </div>
                         </div>
                         <?php 
@@ -443,7 +475,10 @@ function buildQueryURL($page = null, $additionalParams = []) {
                         else:
                         ?>
                         <div class="no-results">
-                            <p>Nenhum serviço encontrado com os filtros selecionados.</p>
+                            <i class="fas fa-search-minus"></i>
+                            <h3>Nenhum serviço encontrado</h3>
+                            <p>Tente ajustar seus filtros ou realizar uma nova busca.</p>
+                            <a href="?" class="btn">Limpar todos os filtros</a>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -482,7 +517,10 @@ function buildQueryURL($page = null, $additionalParams = []) {
         </div>
     </main>
     
-    <!-- Removido script duplicado -->
+    <footer>
+        <!-- Supondo que você tenha um footer padrão incluído via CSS -->
+    </footer>
+    
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="../../JavaScript/main.js"></script>
     <script src="../../JavaScript/main_service.js"></script>
