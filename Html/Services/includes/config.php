@@ -2,13 +2,13 @@
 // Definição de constantes e configurações globais
 
 // Configuração do banco de dados
-define('DB_PATH', '../../../database/TesteOlga.db');
+define('DB_PATH', '../../database/TesteOlga.db');
 
 // Configuração de paginação
 define('ITEMS_PER_PAGE', 9);
 
 // Configuração de caminhos
-define('BASE_URL', '/services'); // Ajuste conforme necessário
+define('BASE_URL', '/Services'); // Ajuste conforme necessário
 define('ROOT_PATH', $_SERVER['DOCUMENT_ROOT'] . BASE_URL);
 
 // Mapeamento de disponibilidade
