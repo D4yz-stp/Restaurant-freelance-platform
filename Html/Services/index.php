@@ -4,13 +4,14 @@
  * 
  * Este arquivo organiza a estrutura da página e inclui os componentes necessários
  */
+session_start();
 
 // Incluir arquivos necessários
 require_once 'includes/config.php';
 require_once 'includes/database.php';
 require_once 'includes/utils.php';
 require_once 'includes/services-repository.php';
-
+include_once 'components/header.php';
 // Obter parâmetros de filtro
 $filterParams = getFilterParams();
 
@@ -51,6 +52,15 @@ extract($filterParams);
 </head>
 <body>
     <?php include 'components/header.php'; ?>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success">
+            <?php 
+                echo $_SESSION['success']; 
+                unset($_SESSION['success']); // Limpa a mensagem após exibição
+            ?>
+        </div>
+    <?php endif; ?>
 
     <main>
         <section class="services-hero">

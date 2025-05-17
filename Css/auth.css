@@ -127,3 +127,41 @@ body {
     border-radius: 5px;
     display: none;
 }
+
+.error-message {
+    color: red;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+.form-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.form-group {
+    margin-bottom: --5px;
+}
+.form-submit {
+    margin-top: 20px;
+}
+
+.debug-info {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    font-size: 12px;
+}
+.debug-info h3 {
+    margin-top: 0;
+    color: #333;
+}
+.debug-info ul {
+    margin: 0;
+    padding-left: 20px;
+}

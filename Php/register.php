@@ -1,7 +1,7 @@
 <?php
 session_start();
 // Configuração da base de dados SQLite
-$db_path = '../database/OlgaRJ.db'; // Ajuste este caminho conforme necessário
+$db_path = '../database/TesteOlga.db'; // Ajuste este caminho conforme necessário
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
@@ -158,9 +158,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Se chegou até aqui, todas as operações foram bem-sucedidas
                         if (empty($errors)) {
                             $db->exec('COMMIT');
+                            
+                            // Armazenar dados do usuário na sessão
                             $_SESSION['user_id'] = $user_id;
                             $_SESSION['user_email'] = $email;
-                            $_SESSION['user_role'] = $role;
+                            $_SESSION['user_role'] = $role_name;
+                            $_SESSION['user_first_name'] = $first_name;
+                            $_SESSION['user_last_name'] = $last_name;
+                            
+                            // Atualizar o timestamp de último login
+                            $stmt = $db->prepare("UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = :user_id");
+                            $stmt->bindValue(':user_id', $user_id, SQLITE3_INTEGER);
+                            $stmt->execute();
+                            
                             $_SESSION['success'] = "Registo realizado com sucesso!";
                             
                             // Redirecionar para a página apropriada após o registro
@@ -183,12 +193,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['errors'] = $errors;
         // Armazena os dados do formulário para preencher novamente
         $_SESSION['form_data'] = $_POST;
-        header("Location: ../../Html/Authentication/register.html");
+        header("Location: ../Html/Log/register.html");
         exit;
     }
 } else {
     // Se não for um POST, redireciona para o formulário
-    header("Location: ../../Html/Authentication/register.html");
+    header("Location: ../Html/Log/register.html");
     exit;
 }
 ?>

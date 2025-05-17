@@ -28,6 +28,10 @@
     background-color: white;
 }
 
+.container > h1{
+    margin-top: 3rem;
+}
+
 .search-input {
     flex: 1;
     padding: 1rem;
