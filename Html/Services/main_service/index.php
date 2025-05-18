@@ -45,10 +45,10 @@ extract($filterParams);
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <link rel="stylesheet" href="../../Css/header+button.css">
-    <link rel="stylesheet" href="../../Css/global.css">
-    <link rel="stylesheet" href="../../Css/footer.css">
-    <link rel="stylesheet" href="../../Css/service.css">
+    <link rel="stylesheet" href="../../../Css/header+button.css">
+    <link rel="stylesheet" href="../../../Css/global.css">
+    <link rel="stylesheet" href="../../../Css/footer.css">
+    <link rel="stylesheet" href="../../../Css/service.css">
 </head>
 <body>
     <?php include 'components/header.php'; ?>
@@ -108,7 +108,7 @@ extract($filterParams);
     <?php include 'components/footer.php'; ?>
     
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="../../JavaScript/main.js"></script>
+    <script src="../../../JavaScript/main.js"></script>
     <script src="assets/js/services.js"></script>
 </body>
 </html>

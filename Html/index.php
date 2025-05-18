@@ -22,7 +22,7 @@ include 'header.php';
     <link rel="stylesheet" href="../Css/global.css">
 </head>
 <body>
-    <?php include __DIR__ . '/Services/components/header.php'; ?>
+    <?php include __DIR__ . '/Services/main_service/components/header.php'; ?>
     
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success">
