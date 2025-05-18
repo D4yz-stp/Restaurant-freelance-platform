@@ -41,7 +41,7 @@ include 'header.php';
                     <p class="hero-subtitle">A plataforma profissional para o setor de restauração</p>
                     <div class="hero-cta">
                         <a href="#features" class="btn btn-primary">Descobrir mais</a>
-                        <a href="/registar-conta" class="btn btn-outline">Criar perfil</a>
+                        <a href=/Html/Log/register.html" class="btn btn-outline">Criar perfil</a>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@ include 'header.php';
                         <li><a href="/como-funciona">Como funciona</a></li>
                         <li><a href="/faq">FAQ</a></li>
                         <li><a href="/politica-privacidade">Política de Privacidade</a></li>
-                        <li><a href="/registar-conta">Criar conta</a></li>
+                        <li><a href="/Html/Log/register.html">Criar conta</a></li>
                     </ul>
                 </div>
 

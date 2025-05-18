@@ -110,6 +110,7 @@ body {
 .buttons-container {
     display: flex;
     margin-top: 1rem;
+    justify-content: center;
 }
 .error-message {
     color: red;
@@ -141,7 +142,13 @@ body {
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 .form-group {
+    display: flex;
     margin-bottom: --5px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+
+
 }
 .form-submit {
     margin-top: 20px;
