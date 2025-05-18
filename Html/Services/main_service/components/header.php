@@ -81,7 +81,7 @@ error_log("Sessão user_first_name: " . (isset($_SESSION['user_first_name']) ? $
                         <?php elseif ($user_data['role_name'] === 'restaurant'): ?>
                             <a href="/Html/Profile/restaurant.php">Perfil Restaurante</a>
                         <?php endif; ?>
-                        <a href="/Html/Services/index.php">Serviços</a>
+                        <a href="/Html/Services/main_service/index.php">Serviços</a>
                         <a href="/Html/Log/logout.html">Sair</a>
                     </div>
                 </div>
