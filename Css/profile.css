@@ -1,0 +1,163 @@
+/* Base Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.perfil-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Info Box Styles */
+.info-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.info-box p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.info-box strong {
+    color: #2c3e50;
+    display: inline-block;
+    width: 180px;
+}
+
+/* Edit Mode Styles */
+.info-box.edit-mode {
+    background: #f9f9f9;
+    border: 1px solid #e1e1e1;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Button Styles */
+.profile-actions {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0061ff 0%, #60efff 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f5f7fa;
+    color: #2c3e50;
+    border: 1px solid #ddd;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+    background: #e1e5eb;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Restaurant Type Badge */
+.restaurant-type {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(0, 97, 255, 0.1);
+    border-radius: 20px;
+    color: #0061ff;
+    font-size: 0.9em;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .perfil-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .info-box {
+        padding: 1.5rem;
+    }
+    
+    .info-box strong {
+        width: 120px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
