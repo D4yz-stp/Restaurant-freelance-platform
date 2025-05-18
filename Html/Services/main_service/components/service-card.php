@@ -51,6 +51,6 @@ $description = truncateText($description);
                 <span class="review-count">(<?php echo $service['review_count']; ?>)</span>
             </div>
         </div>
-        <a href="service-details.php?id=<?php echo $service['service_id']; ?>" class="service-link"></a>
+        <a href="../service/service-details.php?id=<?php echo $service['service_id']; ?>" class="service-link">zaaaa</a>
     </div>
 </div>

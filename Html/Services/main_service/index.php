@@ -8,7 +8,7 @@ session_start();
 
 // Incluir arquivos necessários
 require_once 'includes/config.php';
-require_once 'includes/database.php';
+require_once 'components/database.php';
 require_once 'includes/utils.php';
 require_once 'includes/services-repository.php';
 include_once 'components/header.php';
