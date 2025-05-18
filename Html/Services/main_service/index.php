@@ -51,7 +51,7 @@ extract($filterParams);
     <link rel="stylesheet" href="../../../Css/service.css">
 </head>
 <body>
-    <?php include 'components/header.php'; ?>
+    <?php include '../components/header.php'; ?>
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success">
@@ -105,7 +105,7 @@ extract($filterParams);
         </div>
     </main>
     
-    <?php include 'components/footer.php'; ?>
+    <?php include '../components/footer.php'; ?>
     
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="../../../JavaScript/main.js"></script>
