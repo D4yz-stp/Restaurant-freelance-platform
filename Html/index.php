@@ -41,7 +41,7 @@ include 'header.php';
                     <p class="hero-subtitle">A plataforma profissional para o setor de restauração</p>
                     <div class="hero-cta">
                         <a href="#features" class="btn btn-primary">Descobrir mais</a>
-                        <a href=/Html/Log/register.html" class="btn btn-outline">Criar perfil</a>
+                        <a href="/Html/Log/register.html" class="btn btn-outline">Criar perfil</a>
                     </div>
                 </div>
             </div>
