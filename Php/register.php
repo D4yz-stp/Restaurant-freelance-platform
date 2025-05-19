@@ -39,21 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($experience_years < 0) $errors[] = "Anos de experiência não pode ser negativo";
     } 
     elseif ($role === 'manager') {
-        $stmt = $db->prepare("
-            INSERT INTO RestaurantProfiles
-            (user_id, restaurant_name, restaurant_type, description, avg_rating)
-            VALUES
-            (:user_id, :restaurant_name, :restaurant_type, :description, 0)
-        ");
-        $stmt->bindValue(':user_id', $user_id, SQLITE3_INTEGER);
-        $stmt->bindValue(':restaurant_name', $restaurant_name, SQLITE3_TEXT);
-        $stmt->bindValue(':restaurant_type', $restaurant_type, SQLITE3_TEXT);
-        $stmt->bindValue(':description', $description, SQLITE3_TEXT);
+        // MOVED THIS VALIDATION BEFORE DB OPERATIONS
+        $restaurant_name = trim($_POST['restaurant_name'] ?? '');
+        $restaurant_type = trim($_POST['restaurant_type'] ?? '');
+        $description = trim($_POST['description'] ?? '');
         
-        if (!$stmt->execute()) {
-            $errors[] = "Erro ao criar perfil de restaurante: " . $db->lastErrorMsg();
-            $db->exec('ROLLBACK');
-        }
+        if (empty($restaurant_name)) $errors[] = "Nome do restaurante é obrigatório";
+        if (empty($restaurant_type)) $errors[] = "Tipo de restaurante é obrigatório";
     }
     else {
         $errors[] = "Perfil inválido selecionado";
@@ -147,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $db->exec('ROLLBACK');
                             }
                         } elseif ($role === 'manager') {
+                            // MOVED THESE VARIABLE ASSIGNMENTS UP TO VALIDATION SECTION
                             $stmt = $db->prepare("
                                 INSERT INTO RestaurantProfiles
                                 (user_id, restaurant_name, restaurant_type, description, avg_rating)
@@ -173,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_SESSION['success'] = "Registo realizado com sucesso!";
                             
                             // Redirecionar para a página apropriada após o registro
-                            header("Location: ../../index.php");
+                            header("Location: ../Html/index.php");
                             exit;
                         } else {
                             $db->exec('ROLLBACK');
@@ -192,12 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['errors'] = $errors;
         // Armazena os dados do formulário para preencher novamente
         $_SESSION['form_data'] = $_POST;
-        header("Location: ../../Html/Authentication/register.html");
+        header("Location: ../../Html/Log/register.html");
         exit;
     }
 } else {
     // Se não for um POST, redireciona para o formulário
-    header("Location: ../../Html/Authentication/register.html");
+    header("Location: ../../Html/Log/register.html");
     exit;
 }
 ?>

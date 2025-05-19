@@ -1,6 +1,6 @@
 <?php
 session_start();
-$db = new SQLite3('../../database/OlgaRJ.db');
+$db = new SQLite3('../../database/TesteOlga.db');
 $db->exec('PRAGMA foreign_keys = ON;');
 
 // Check if logged in
