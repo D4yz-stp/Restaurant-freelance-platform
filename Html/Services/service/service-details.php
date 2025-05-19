@@ -21,11 +21,12 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $service_id = intval($_GET['id']);
 
-// Obter detalhes completos do serviço, do freelancer e suas avaliações
+// Obter detalhes completos do serviço específico
 $stmt = $db->prepare("
     SELECT
         s.service_id, s.title AS service_title, s.description AS service_description,
         s.price_type, s.base_price, s.service_image_url, s.created_at AS service_created,
+        s.category_id, 
         fp.profile_id AS freelancer_id, fp.hourly_rate, fp.availability, fp.experience_years,
         fp.avg_rating, fp.review_count, fp.availability_details,
         u.user_id, u.first_name, u.last_name, u.email, u.profile_image_url, u.country, u.city,
@@ -55,17 +56,25 @@ $availability = ($service['availability'] == 'flexible') ? 'Flexível' : $servic
 $profileImage = !empty($service['profile_image_url']) ? $service['profile_image_url'] : 'assets/images/default-profile.jpg';
 $serviceImage = !empty($service['service_image_url']) ? $service['service_image_url'] : 'assets/images/default-service.jpg';
 
-// Obter habilidades do freelancer
+// Obter habilidades relevantes para este serviço específico
 $stmt = $db->prepare("
     SELECT s.skill_name, fs.proficiency_level
     FROM FreelancerSkills fs
     JOIN Skills s ON fs.skill_id = s.skill_id
     WHERE fs.freelancer_id = ?
+    AND s.skill_id IN (
+        -- Subquery para encontrar habilidades geralmente relacionadas a esta categoria 
+        -- baseado em padrões históricos de oferta de serviços
+        SELECT DISTINCT fs2.skill_id
+        FROM Services sv
+        JOIN FreelancerSkills fs2 ON sv.freelancer_id = fs2.freelancer_id
+        WHERE sv.category_id = ?
+    )
 ");
-$stmt->execute([$service['freelancer_id']]);
+$stmt->execute([$service['freelancer_id'], $service['category_id']]);
 $skills = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obter idiomas do freelancer
+// Obter idiomas do freelancer - isso é relevante para qualquer serviço
 $stmt = $db->prepare("
     SELECT l.language_name, fl.proficiency
     FROM FreelancerLanguages fl
@@ -75,43 +84,56 @@ $stmt = $db->prepare("
 $stmt->execute([$service['freelancer_id']]);
 $languages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obter especializações do freelancer com base na categoria do serviço
-// Como não sabemos a categoria exata, vamos verificar em todas as tabelas de especialização
+// Obter especializações do freelancer relacionadas à categoria do serviço atual
 $specializations = [];
 
-// Verificar se é um Chef
-$stmt = $db->prepare("SELECT * FROM ChefSpecializations WHERE freelancer_id = ?");
-$stmt->execute([$service['freelancer_id']]);
-$chefSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($chefSpecs) {
-    $specializations['chef'] = $chefSpecs;
+// Verificar qual especialização está relacionada à categoria do serviço atual
+switch (strtolower($service['category_name'] ?? '')) {
+    case 'chef':
+    case 'culinária':
+    case 'cozinha':
+        $stmt = $db->prepare("SELECT * FROM ChefSpecializations WHERE freelancer_id = ?");
+        $stmt->execute([$service['freelancer_id']]);
+        $chefSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($chefSpecs) {
+            $specializations['chef'] = $chefSpecs;
+        }
+        break;
+        
+    case 'limpeza':
+    case 'higienização':
+        $stmt = $pdo->prepare("SELECT * FROM CleaningSpecializations WHERE freelancer_id = ?");
+        $stmt->execute([$service['freelancer_id']]);
+        $cleaningSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($cleaningSpecs) {
+            $specializations['cleaning'] = $cleaningSpecs;
+        }
+        break;
+        
+    case 'bar':
+    case 'bartender':
+    case 'bebidas':
+        $stmt = $pdo->prepare("SELECT * FROM BartenderSpecializations WHERE freelancer_id = ?");
+        $stmt->execute([$service['freelancer_id']]);
+        $bartenderSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($bartenderSpecs) {
+            $specializations['bartender'] = $bartenderSpecs;
+        }
+        break;
+        
+    case 'atendimento':
+    case 'garçom':
+    case 'serviço':
+        $stmt = $pdo->prepare("SELECT * FROM ServiceStaffSpecializations WHERE freelancer_id = ?");
+        $stmt->execute([$service['freelancer_id']]);
+        $serviceStaffSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($serviceStaffSpecs) {
+            $specializations['service_staff'] = $serviceStaffSpecs;
+        }
+        break;
 }
 
-// Verificar se é especializado em Limpeza
-$stmt = $pdo->prepare("SELECT * FROM CleaningSpecializations WHERE freelancer_id = ?");
-$stmt->execute([$service['freelancer_id']]);
-$cleaningSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($cleaningSpecs) {
-    $specializations['cleaning'] = $cleaningSpecs;
-}
-
-// Verificar se é Bartender
-$stmt = $pdo->prepare("SELECT * FROM BartenderSpecializations WHERE freelancer_id = ?");
-$stmt->execute([$service['freelancer_id']]);
-$bartenderSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($bartenderSpecs) {
-    $specializations['bartender'] = $bartenderSpecs;
-}
-
-// Verificar se é especializado em Atendimento
-$stmt = $pdo->prepare("SELECT * FROM ServiceStaffSpecializations WHERE freelancer_id = ?");
-$stmt->execute([$service['freelancer_id']]);
-$serviceStaffSpecs = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($serviceStaffSpecs) {
-    $specializations['service_staff'] = $serviceStaffSpecs;
-}
-
-// Obter avaliações para este freelancer
+// Obter avaliações APENAS para este serviço específico
 $stmt = $pdo->prepare("
     SELECT 
         r.review_id, r.overall_rating, r.comment, r.created_at,
@@ -121,12 +143,35 @@ $stmt = $pdo->prepare("
     JOIN Contracts c ON r.contract_id = c.contract_id
     JOIN Users u ON r.reviewer_id = u.user_id
     JOIN RestaurantProfiles rp ON u.user_id = rp.user_id
-    WHERE r.reviewee_id = (SELECT user_id FROM FreelancerProfiles WHERE profile_id = ?)
+    WHERE c.service_id = ? -- Filtrando especificamente por este serviço
+    AND r.reviewee_id = (SELECT user_id FROM FreelancerProfiles WHERE profile_id = ?)
     ORDER BY r.created_at DESC
     LIMIT 10
 ");
-$stmt->execute([$service['freelancer_id']]);
+$stmt->execute([$service_id, $service['freelancer_id']]);
 $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calcular estatísticas específicas para este serviço com base nas avaliações
+$serviceStats = [
+    'avg_rating' => 0,
+    'total_reviews' => count($reviews),
+    'rating_distribution' => [
+        '5' => 0,
+        '4' => 0,
+        '3' => 0,
+        '2' => 0, 
+        '1' => 0
+    ]
+];
+
+if (count($reviews) > 0) {
+    $totalRating = 0;
+    foreach ($reviews as $review) {
+        $totalRating += $review['overall_rating'];
+        $serviceStats['rating_distribution'][$review['overall_rating']]++;
+    }
+    $serviceStats['avg_rating'] = $totalRating / count($reviews);
+}
 
 // Verificar se o usuário atual é um restaurante para mostrar o botão de conversa
 $isRestaurant = false;
@@ -157,9 +202,10 @@ $isOwner = false;
 if (isset($_SESSION['user_id'])) {
     $stmt = $pdo->prepare("
         SELECT 1 FROM FreelancerProfiles fp
-        WHERE fp.profile_id = ? AND fp.user_id = ?
+        JOIN Services s ON fp.profile_id = s.freelancer_id
+        WHERE s.service_id = ? AND fp.user_id = ?
     ");
-    $stmt->execute([$service['freelancer_id'], $_SESSION['user_id']]);
+    $stmt->execute([$service_id, $_SESSION['user_id']]);
     $isOwner = $stmt->fetchColumn() ? true : false;
 }
 
@@ -185,18 +231,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['start_conversation']) 
             $stmt->execute([$restaurant['restaurant_id'], $service['freelancer_id']]);
             $conversation_id = $pdo->lastInsertId();
             
-            // Adicionar mensagem inicial
+            // Adicionar mensagem inicial com referência ao serviço específico
             if (isset($_POST['message']) && !empty(trim($_POST['message']))) {
+                $serviceReference = "Referente ao serviço: " . $service['service_title'];
+                $fullMessage = $serviceReference . "\n\n" . $_POST['message'];
+                
                 $stmt = $pdo->prepare("
                     INSERT INTO Messages (conversation_id, sender_id, message_text)
                     VALUES (?, ?, ?)
                 ");
-                $stmt->execute([$conversation_id, $_SESSION['user_id'], $_POST['message']]);
+                $stmt->execute([$conversation_id, $_SESSION['user_id'], $fullMessage]);
             }
             
             $pdo->commit();
             $hasConversation = true;
-            $conversationSuccess = 'Conversa iniciada com sucesso!';
+            $conversationSuccess = 'Conversa iniciada com sucesso para o serviço: ' . $service['service_title'];
             
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -216,16 +265,18 @@ include 'includes/header.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="OlgaRJ - Plataforma de perfis profissionais para restauração">
-    <title>OlgaRJ | Perfis Profissionais para Restauração</title>
+    <title>OlgaRJ | <?php echo safeHtml($service['service_title']); ?></title>
     
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <link rel="stylesheet" href="../../../Css/global.css">
     <link rel="stylesheet" href="../../../Css/main_service.css">
     <link rel="stylesheet" href="../../../Css/header+button.css">
+    <link rel="stylesheet" href="../../../Css/footer.css">
 </head>
 <body>
     
@@ -258,17 +309,17 @@ include 'includes/header.php';
                         <div class="service-rating">
                             <div class="stars">
                                 <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <?php if ($i <= round($service['avg_rating'])): ?>
+                                    <?php if ($i <= round($serviceStats['avg_rating'])): ?>
                                         <i class="fas fa-star"></i>
-                                    <?php elseif ($i - 0.5 <= $service['avg_rating']): ?>
+                                    <?php elseif ($i - 0.5 <= $serviceStats['avg_rating']): ?>
                                         <i class="fas fa-star-half-alt"></i>
                                     <?php else: ?>
                                         <i class="far fa-star"></i>
                                     <?php endif; ?>
                                 <?php endfor; ?>
                             </div>
-                            <span class="rating-value"><?php echo $rating; ?></span>
-                            <span class="review-count">(<?php echo $service['review_count']; ?> avaliações)</span>
+                            <span class="rating-value"><?php echo number_format($serviceStats['avg_rating'], 1); ?></span>
+                            <span class="review-count">(<?php echo $serviceStats['total_reviews']; ?> avaliações para este serviço)</span>
                         </div>
                         
                         <div class="service-price">
@@ -298,7 +349,7 @@ include 'includes/header.php';
                                     </a>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#contactModal">
-                                        <i class="fas fa-comments"></i> Iniciar Conversa
+                                        <i class="fas fa-comments"></i> Falar sobre este serviço
                                     </button>
                                 <?php endif; ?>
                             </div>
@@ -314,18 +365,19 @@ include 'includes/header.php';
                     </div>
                     
                     <div class="service-meta-info">
+                        <!-- Informações específicas deste serviço -->
                         <div class="meta-item">
-                            <i class="fas fa-briefcase"></i>
+                            <i class="fas fa-tag"></i>
                             <div class="meta-content">
-                                <span class="meta-label">Experiência</span>
-                                <span class="meta-value"><?php echo $service['experience_years']; ?> anos</span>
+                                <span class="meta-label">Tipo de Preço</span>
+                                <span class="meta-value"><?php echo ($service['price_type'] == 'hourly') ? 'Por hora' : 'Preço fixo'; ?></span>
                             </div>
                         </div>
                         
                         <div class="meta-item">
-                            <i class="fas fa-clock"></i>
+                            <i class="fas fa-calendar-check"></i>
                             <div class="meta-content">
-                                <span class="meta-label">Disponibilidade</span>
+                                <span class="meta-label">Disponibilidade para este serviço</span>
                                 <span class="meta-value"><?php echo $availability; ?></span>
                             </div>
                         </div>
@@ -347,18 +399,23 @@ include 'includes/header.php';
             <div class="service-content-tabs">
                 <ul class="nav nav-tabs" id="serviceDetailsTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="description-tab" data-toggle="tab" href="#description" role="tab">
-                            Descrição
+                        <a class="nav-link active" id="description-tab" data-toggle="tab" href="#description" role="tab">
+                            Descrição do Serviço
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
                         <a class="nav-link" id="skills-tab" data-toggle="tab" href="#skills" role="tab">
-                            Habilidades e Especializações
+                            Habilidades para este Serviço
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
                         <a class="nav-link" id="reviews-tab" data-toggle="tab" href="#reviews" role="tab">
-                            Avaliações (<?php echo count($reviews); ?>)
+                            Avaliações (<?php echo $serviceStats['total_reviews']; ?>)
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="provider-tab" data-toggle="tab" href="#provider" role="tab">
+                            Sobre o Prestador
                         </a>
                     </li>
                 </ul>
@@ -367,16 +424,17 @@ include 'includes/header.php';
                     <!-- Aba de Descrição -->
                     <div class="tab-pane fade show active" id="description" role="tabpanel">
                         <div class="service-description">
+                            <h3>Sobre este serviço</h3>
                             <?php echo nl2br(safeHtml($service['service_description'])); ?>
                         </div>
                     </div>
                     
                     <!-- Aba de Habilidades e Especializações -->
                     <div class="tab-pane fade" id="skills" role="tabpanel">
-                        <!-- Habilidades -->
+                        <!-- Habilidades relevantes para este serviço -->
                         <?php if (!empty($skills)): ?>
                             <div class="skills-section">
-                                <h3>Habilidades</h3>
+                                <h3>Habilidades para este Serviço</h3>
                                 <div class="skills-list">
                                     <?php foreach ($skills as $skill): ?>
                                         <div class="skill-item">
@@ -388,9 +446,11 @@ include 'includes/header.php';
                                     <?php endforeach; ?>
                                 </div>
                             </div>
+                        <?php else: ?>
+                            <p>Não há habilidades específicas cadastradas para este serviço.</p>
                         <?php endif; ?>
                         
-                        <!-- Idiomas -->
+                        <!-- Idiomas do prestador -->
                         <?php if (!empty($languages)): ?>
                             <div class="languages-section">
                                 <h3>Idiomas</h3>
@@ -407,10 +467,10 @@ include 'includes/header.php';
                             </div>
                         <?php endif; ?>
                         
-                        <!-- Especializações -->
+                        <!-- Especializações relevantes para este serviço -->
                         <?php if (!empty($specializations)): ?>
                             <div class="specializations-section">
-                                <h3>Especializações</h3>
+                                <h3>Especializações para <?php echo safeHtml($service['category_name']); ?></h3>
                                 
                                 <?php if (isset($specializations['chef'])): ?>
                                     <div class="specialization-group">
@@ -468,60 +528,205 @@ include 'includes/header.php';
                                     <div class="specialization-group">
                                         <h4>Especialização em Atendimento</h4>
                                         <ul class="specialization-list">
-                                            <li><strong>Experiência em Fine Dining:</strong> <?php echo $specializations['service_staff']['fine_dining_experience'] ? 'Sim' : 'Não'; ?></li>
-                                            <li><strong>Serviço para Eventos:</strong> <?php echo $specializations['service_staff']['event_service'] ? 'Sim' : 'Não'; ?></li>
-                                            <li><strong>Conhecimento de Sommelier:</strong> <?php echo $specializations['service_staff']['sommelier_knowledge'] ? 'Sim' : 'Não'; ?></li>
+                                            <li><strong>Serviço de mesa:</strong> <?php echo $specializations['service_staff']['table_service'] ? 'Sim' : 'Não'; ?></li>
+                                            <li><strong>Experiência em eventos:</strong> <?php echo $specializations['service_staff']['event_experience'] ? 'Sim' : 'Não'; ?></li>
                                             
-                                            <?php if (!empty($specializations['service_staff']['customer_service_rating'])): ?>
-                                                <li><strong>Classificação de Atendimento:</strong> 
-                                                    <?php echo $specializations['service_staff']['customer_service_rating']; ?>/5
-                                                </li>
+                                            <?php if (!empty($specializations['service_staff']['serving_style'])): ?>
+                                                <li><strong>Estilo de Serviço:</strong> <?php echo safeHtml($specializations['service_staff']['serving_style']); ?></li>
                                             <?php endif; ?>
+                                            
+                                            <li><strong>Conhecimento de Etiqueta:</strong> <?php echo $specializations['service_staff']['etiquette_knowledge'] ? 'Sim' : 'Não'; ?></li>
                                         </ul>
                                     </div>
                                 <?php endif; ?>
                             </div>
+                        <?php else: ?>
+                            <p>Não há especializações registradas para este tipo de serviço.</p>
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Aba de Avaliações -->
+                    <!-- Aba de Avaliações para ESTE SERVIÇO ESPECÍFICO -->
                     <div class="tab-pane fade" id="reviews" role="tabpanel">
-                        <?php if (!empty($reviews)): ?>
-                            <div class="reviews-section">
-                                <?php foreach ($reviews as $review): ?>
-                                    <div class="review-item">
-                                        <div class="review-header">
+                        <div class="reviews-section">
+                            <h3>Avaliações deste Serviço</h3>
+                            
+                            <!-- Estatísticas das avaliações -->
+                            <div class="review-stats">
+                                <div class="overall-rating">
+                                    <span class="rating-number"><?php echo number_format($serviceStats['avg_rating'], 1); ?></span>
+                                    <div class="stars">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <?php if ($i <= round($serviceStats['avg_rating'])): ?>
+                                                <i class="fas fa-star"></i>
+                                            <?php elseif ($i - 0.5 <= $serviceStats['avg_rating']): ?>
+                                                <i class="fas fa-star-half-alt"></i>
+                                            <?php else: ?>
+                                                <i class="far fa-star"></i>
+                                            <?php endif; ?>
+                                        <?php endfor; ?>
+                                    </div>
+                                    <span class="review-count"><?php echo $serviceStats['total_reviews']; ?> avaliações</span>
+                                </div>
+                                
+                                <div class="rating-bars">
+                                    <?php for ($i = 5; $i >= 1; $i--): ?>
+                                        <?php 
+                                        $count = $serviceStats['rating_distribution'][$i];
+                                        $percentage = ($serviceStats['total_reviews'] > 0) ? 
+                                            ($count / $serviceStats['total_reviews']) * 100 : 0;
+                                        ?>
+                                        <div class="rating-bar-item">
+                                            <div class="rating-stars">
+                                                <span><?php echo $i; ?> <i class="fas fa-star"></i></span>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" style="width: <?php echo $percentage; ?>%" 
+                                                    aria-valuenow="<?php echo $percentage; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="rating-count">
+                                                <span><?php echo $count; ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            
+                            <!-- Lista de avaliações -->
+                            <div class="reviews-list">
+                                <?php if (empty($reviews)): ?>
+                                    <div class="empty-reviews">
+                                        <p>Este serviço ainda não possui avaliações. Seja o primeiro a avaliar!</p>
+                                    </div>
+                                <?php else: ?>
+                                    <?php foreach ($reviews as $review): ?>
+                                        <?php 
+                                        $reviewerImg = !empty($review['profile_image_url']) ? $review['profile_image_url'] : 'assets/images/default-profile.jpg';
+                                        $reviewerName = $review['first_name'] . ' ' . $review['last_name'];
+                                        $reviewDate = new DateTime($review['created_at']);
+                                        $formattedDate = $reviewDate->format('d/m/Y');
+                                        ?>
+                                        <div class="review-item">
                                             <div class="reviewer-info">
-                                                <img src="<?php echo !empty($review['profile_image_url']) ? $review['profile_image_url'] : 'assets/images/default-profile.jpg'; ?>" 
-                                                     alt="<?php echo safeHtml($review['first_name'] . ' ' . $review['last_name']); ?>" 
-                                                     class="reviewer-avatar">
+                                                <img src="<?php echo $reviewerImg; ?>" alt="<?php echo safeHtml($reviewerName); ?>" class="reviewer-avatar">
                                                 <div class="reviewer-details">
-                                                    <h4 class="reviewer-name"><?php echo safeHtml($review['first_name'] . ' ' . $review['last_name']); ?></h4>
-                                                    <div class="review-date"><?php echo date('d/m/Y', strtotime($review['created_at'])); ?></div>
+                                                    <h4 class="reviewer-name"><?php echo safeHtml($reviewerName); ?></h4>
+                                                    <span class="review-date"><?php echo $formattedDate; ?></span>
                                                 </div>
                                             </div>
-                                            <div class="review-rating">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <?php if ($i <= $review['overall_rating']): ?>
-                                                        <i class="fas fa-star"></i>
-                                                    <?php else: ?>
-                                                        <i class="far fa-star"></i>
-                                                    <?php endif; ?>
-                                                <?php endfor; ?>
+                                            
+                                            <div class="review-content">
+                                                <div class="review-rating">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <?php if ($i <= $review['overall_rating']): ?>
+                                                            <i class="fas fa-star"></i>
+                                                        <?php else: ?>
+                                                            <i class="far fa-star"></i>
+                                                        <?php endif; ?>
+                                                    <?php endfor; ?>
+                                                </div>
+                                                
+                                                <?php if (!empty($review['contract_title'])): ?>
+                                                    <div class="service-context">
+                                                        <span class="contract-reference">Projeto: <?php echo safeHtml($review['contract_title']); ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                                
+                                                <div class="review-text">
+                                                    <?php echo nl2br(safeHtml($review['comment'])); ?>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="review-content">
-                                            <p class="contract-title">Serviço: <?php echo safeHtml($review['contract_title']); ?></p>
-                                            <p class="review-comment"><?php echo nl2br(safeHtml($review['comment'])); ?></p>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Aba Sobre o Prestador -->
+                    <div class="tab-pane fade" id="provider" role="tabpanel">
+                        <div class="provider-section">
+                            <div class="provider-profile-detailed">
+                                <div class="provider-header">
+                                    <img src="<?php echo $profileImage; ?>" alt="<?php echo safeHtml($fullName); ?>" class="provider-avatar-large">
+                                    <div class="provider-headline">
+                                        <h3 class="provider-name"><?php echo safeHtml($fullName); ?></h3>
+                                        <div class="provider-meta">
+                                            <span class="provider-experience">
+                                                <i class="fas fa-briefcase"></i> <?php echo $service['experience_years']; ?> anos de experiência
+                                            </span>
+                                            <span class="provider-overall-rating">
+                                                <i class="fas fa-star"></i> <?php echo $rating; ?> (<?php echo $service['review_count']; ?> avaliações totais)
+                                            </span>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
+                                </div>
+                                
+                                <!-- Disponibilidade do freelancer -->
+                                <div class="provider-availability">
+                                    <h4><i class="fas fa-calendar-alt"></i> Disponibilidade Geral</h4>
+                                    <p><?php echo $availability; ?></p>
+                                    
+                                    <?php if (!empty($service['availability_details'])): ?>
+                                        <div class="availability-details">
+                                            <h5>Detalhes de Disponibilidade:</h5>
+                                            <p><?php echo nl2br(safeHtml($service['availability_details'])); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Outros serviços do mesmo freelancer -->
+                                <?php
+                                $stmt = $pdo->prepare("
+                                    SELECT service_id, title, base_price, price_type, service_image_url, category_id
+                                    FROM Services
+                                    WHERE freelancer_id = ? 
+                                    AND service_id != ? 
+                                    AND is_active = 1
+                                    LIMIT 4
+                                ");
+                                $stmt->execute([$service['freelancer_id'], $service_id]);
+                                $otherServices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                
+                                if (!empty($otherServices)): ?>
+                                    <div class="other-services-section">
+                                        <h4>Outros Serviços deste Prestador</h4>
+                                        <div class="other-services-grid">
+                                            <?php foreach ($otherServices as $otherService):
+                                                $otherServiceImg = !empty($otherService['service_image_url']) ? $otherService['service_image_url'] : 'assets/images/default-service.jpg';
+                                                $otherServicePrice = number_format($otherService['base_price'], 2, ',', '.');
+                                                $otherServicePriceType = ($otherService['price_type'] == 'hourly') ? '/hora' : '';
+                                                
+                                                // Obter nome da categoria
+                                                $stmt = $pdo->prepare("SELECT name FROM ServiceCategories WHERE category_id = ?");
+                                                $stmt->execute([$otherService['category_id']]);
+                                                $categoryName = $stmt->fetchColumn() ?: 'Categoria';
+                                            ?>
+                                                <div class="other-service-card">
+                                                    <a href="service-details.php?id=<?php echo $otherService['service_id']; ?>" class="service-link">
+                                                        <div class="other-service-image">
+                                                            <img src="<?php echo $otherServiceImg; ?>" alt="<?php echo safeHtml($otherService['title']); ?>">
+                                                        </div>
+                                                        <div class="other-service-info">
+                                                            <h5 class="other-service-title"><?php echo safeHtml($otherService['title']); ?></h5>
+                                                            <span class="other-service-category"><?php echo safeHtml($categoryName); ?></span>
+                                                            <div class="other-service-price">
+                                                                <span>R$ <?php echo $otherServicePrice; ?></span>
+                                                                <span class="price-type"><?php echo $otherServicePriceType; ?></span>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="see-all-services">
+                                            <a href="freelancer-profile.php?id=<?php echo $service['freelancer_id']; ?>" class="btn btn-outline-primary">
+                                                Ver Todos os Serviços deste Prestador
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                        <?php else: ?>
-                            <div class="no-reviews">
-                                <p>Este freelancer ainda não recebeu avaliações.</p>
-                            </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -529,32 +734,135 @@ include 'includes/header.php';
     </div>
 </main>
 
-<!-- Modal para Iniciar Conversa -->
+<!-- Modal para iniciar conversa -->
 <?php if ($isRestaurant && !$hasConversation && !$isOwner): ?>
 <div class="modal fade" id="contactModal" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form action="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="contactModalLabel">Iniciar Conversa com <?php echo safeHtml($fullName); ?></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+            <div class="modal-header">
+                <h5 class="modal-title" id="contactModalLabel">Falar sobre: <?php echo safeHtml($service['service_title']); ?></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="message">Mensagem Inicial</label>
-                        <textarea class="form-control" id="message" name="message" rows="4" placeholder="Escreva sua mensagem inicial..." required></textarea>
+                        <label for="message">Sua mensagem para <?php echo safeHtml($fullName); ?>:</label>
+                        <textarea class="form-control" id="message" name="message" rows="5" placeholder="Olá, gostaria de conversar sobre este serviço..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" name="start_conversation" class="btn btn-primary">Enviar Mensagem</button>
+                    <button type="submit" name="start_conversation" class="btn btn-primary">Iniciar Conversa</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 <?php endif; ?>
+
+<!-- Seção de serviços semelhantes - Recomendações baseadas na categoria -->
+<section class="similar-services-section">
+    <div class="container">
+        <h2 class="section-title">Serviços Semelhantes</h2>
+        <div class="services-grid">
+            <?php
+            // Buscar serviços semelhantes da mesma categoria (exceto este)
+            $stmt = $pdo->prepare("
+                SELECT 
+                    s.service_id, s.title, s.base_price, s.price_type, s.service_image_url,
+                    u.first_name, u.last_name, u.profile_image_url,
+                    fp.avg_rating, fp.review_count, fp.profile_id
+                FROM Services s
+                JOIN FreelancerProfiles fp ON s.freelancer_id = fp.profile_id
+                JOIN Users u ON fp.user_id = u.user_id
+                WHERE s.category_id = ? 
+                AND s.service_id != ? 
+                AND s.is_active = 1
+                ORDER BY fp.avg_rating DESC
+                LIMIT 4
+            ");
+            $stmt->execute([$service['category_id'], $service_id]);
+            $similarServices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!empty($similarServices)):
+                foreach ($similarServices as $similarService):
+                    $similarServiceImg = !empty($similarService['service_image_url']) ? $similarService['service_image_url'] : 'assets/images/default-service.jpg';
+                    $similarProviderImg = !empty($similarService['profile_image_url']) ? $similarService['profile_image_url'] : 'assets/images/default-profile.jpg';
+                    $similarServicePrice = number_format($similarService['base_price'], 2, ',', '.');
+                    $similarServicePriceType = ($similarService['price_type'] == 'hourly') ? '/hora' : '';
+                    $similarProviderName = $similarService['first_name'] . ' ' . $similarService['last_name'];
+                    $similarServiceRating = number_format($similarService['avg_rating'], 1);
+            ?>
+                <div class="service-card">
+                    <a href="service-details.php?id=<?php echo $similarService['service_id']; ?>" class="service-link">
+                        <div class="service-image">
+                            <img src="<?php echo $similarServiceImg; ?>" alt="<?php echo safeHtml($similarService['title']); ?>">
+                        </div>
+                        <div class="service-info">
+                            <h3 class="service-title"><?php echo safeHtml($similarService['title']); ?></h3>
+                            <div class="service-provider">
+                                <img src="<?php echo $similarProviderImg; ?>" alt="<?php echo safeHtml($similarProviderName); ?>" class="provider-avatar-small">
+                                <span class="provider-name"><?php echo safeHtml($similarProviderName); ?></span>
+                            </div>
+                            <div class="service-meta">
+                                <div class="service-rating">
+                                    <i class="fas fa-star"></i>
+                                    <span><?php echo $similarServiceRating; ?></span>
+                                    <span class="review-count">(<?php echo $similarService['review_count']; ?>)</span>
+                                </div>
+                                <div class="service-price">
+                                    <span>R$ <?php echo $similarServicePrice; ?></span>
+                                    <span class="price-type"><?php echo $similarServicePriceType; ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <?php
+                endforeach;
+            else:
+            ?>
+                <div class="no-similar-services">
+                    <p>Não encontramos serviços semelhantes no momento.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="view-more-section">
+            <a href="search-services.php?category=<?php echo $service['category_id']; ?>" class="btn btn-outline-primary">
+                Ver Mais Serviços de <?php echo safeHtml($service['category_name']); ?>
+            </a>
+        </div>
+    </div>
+</section>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Inicializar animações AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Inicializar tabs
+        $('#serviceDetailsTabs a').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+    });
+</script>
+
+<?php
+// Incluir o rodapé do site
+include '../components/footer.php';
+?>
 </body>
 </html>

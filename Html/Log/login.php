@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $debug_info[] = "Redirecionando para: ../Services/index.php";
                         
                         // Redirecionar para a página principal após login
-                        header("Location: ../Services/index.php");
+                        header("Location: ../Services/main_service/index.php");
                         exit;
                     } else {
                         $debug_info[] = "Verificação de senha falhou!";

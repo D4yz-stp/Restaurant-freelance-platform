@@ -73,6 +73,19 @@
     top: 20px;
 }
 
+.service-link {
+  text-decoration: none; /* Remove o sublinhado */
+  color: inherit;         /* Mantém a cor original do texto */
+  display: block;         /* Garante que o <a> funcione como bloco clicável */
+}
+
+.service-link:hover .service-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  transition: 0.2s ease-in-out;
+}
+
+
 .filter-section {
     margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--color-gray);

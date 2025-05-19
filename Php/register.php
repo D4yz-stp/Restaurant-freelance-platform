@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_SESSION['success'] = "Registo realizado com sucesso!";
                             
                             // Redirecionar para a página apropriada após o registro
-                            header("Location: ../../../Html/Services/index.php");
+                            header("Location: ../../../Html/Services/main_service/index.php");
                             exit;
                         } else {
                             $db->exec('ROLLBACK');

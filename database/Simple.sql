@@ -311,16 +311,19 @@ INSERT INTO Services (freelancer_id, category_id, title, description, price_type
 -- Inserir dados na tabela Contracts
 INSERT INTO Contracts (restaurant_id, freelancer_id, service_id, title, description, agreed_price, payment_type, start_date, end_date, status) VALUES
 (1, 1, 1, 'Evento de Aniversário', 'Serviço de chef particular para evento de aniversário', 1000.00, 'cartão', '2023-10-15 18:00:00', '2023-10-15 23:00:00', 'concluído'),
-(2, 3, 3, 'Limpeza Semanal', 'Serviço de limpeza semanal', 500.00, 'dinheiro', '2023-10-10 08:00:00', '2023-10-10 12:00:00', 'ativo');
+(2, 3, 3, 'Limpeza Semanal', 'Serviço de limpeza semanal', 500.00, 'dinheiro', '2023-10-10 08:00:00', '2023-10-10 12:00:00', 'ativo'),
+(2, 1, 1, 'Evento Corporativo', 'Serviço de chef para evento corporativo', 1200.00, 'transferência', '2023-11-01 19:00:00', '2023-11-01 23:00:00', 'concluído');
 
 -- Inserir dados na tabela Payments
 INSERT INTO Payments (contract_id, amount, payment_method, status) VALUES
 (1, 1000.00, 'cartão', 'concluído'),
-(2, 500.00, 'dinheiro', 'pendente');
+(2, 500.00, 'dinheiro', 'pendente'),
+(3, 1200.00, 'transferência', 'concluído');
 
 -- Inserir dados na tabela Reviews
 INSERT INTO Reviews (contract_id, reviewer_id, reviewee_id, overall_rating, comment) VALUES
 (1, 2, 1, 5, 'Excelente serviço!'),
+(3, 4, 1, 3, 'Profissional excepcional! Superou todas as expectivas'),
 (1, 1, 2, 4, 'Ótimo evento!');
 
 -- Inserir dados na tabela Conversations
@@ -375,8 +378,89 @@ UPDATE Services SET service_image_url = 'https://example.com/chef.jpg' WHERE ser
 UPDATE Services SET service_image_url = 'https://example.com/garcom.jpg' WHERE service_id = 2;
 UPDATE Services SET service_image_url = 'https://example.com/limpeza.jpg' WHERE service_id = 3;
 
-UPDATE FreelancerProfiles SET review_count = 10 WHERE profile_id = 1;
-UPDATE FreelancerProfiles SET review_count = 5 WHERE profile_id = 2;
+ALTER TABLE Services ADD COLUMN review_count INTEGER DEFAULT 0;
+ALTER TABLE Services ADD COLUMN avg_rating REAL DEFAULT 0;
 
 UPDATE FreelancerProfiles SET availability_details = 'Disponível nos finais de semana' WHERE profile_id = 1;
 UPDATE FreelancerProfiles SET availability_details = 'Disponível durante a semana' WHERE profile_id = 2;
+
+-- Remover o valor default para a média de avaliações do freelancer
+-- Primeiro, alteramos a coluna para remover o default value de avg_rating
+ALTER TABLE FreelancerProfiles DROP COLUMN avg_rating;
+
+-- Adicionar a coluna novamente, mas sem valor default
+ALTER TABLE FreelancerProfiles ADD COLUMN avg_rating REAL;
+
+-- Criar uma VIEW que calcula a média de avaliações para cada freelancer
+-- Esta VIEW usa a tabela Reviews existente e calcula a média para cada perfil de freelancer
+CREATE VIEW FreelancerRatingView AS
+SELECT 
+    fp.profile_id,
+    AVG(r.overall_rating) AS avg_rating,
+    COUNT(r.review_id) AS review_count
+FROM 
+    FreelancerProfiles fp
+JOIN 
+    Users u ON fp.user_id = u.user_id
+LEFT JOIN 
+    Reviews r ON r.reviewee_id = u.user_id
+WHERE 
+    r.reviewee_id IS NOT NULL
+GROUP BY 
+    fp.profile_id;
+
+-- Criar um TRIGGER que atualiza automaticamente a média de avaliações do freelancer
+-- quando uma nova avaliação é adicionada, atualizada ou removida
+CREATE TRIGGER update_freelancer_avg_rating
+AFTER INSERT OR UPDATE OR DELETE ON Reviews
+BEGIN
+    -- Atualizar as médias de avaliações dos freelancers afetados
+    UPDATE FreelancerProfiles 
+    SET 
+        avg_rating = (
+            SELECT AVG(r.overall_rating)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id 
+                FROM FreelancerProfiles 
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        ),
+        review_count = (
+            SELECT COUNT(r.review_id)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id 
+                FROM FreelancerProfiles 
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        )
+    WHERE 
+        user_id IN (
+            SELECT reviewee_id 
+            FROM Reviews 
+            WHERE rowid = new.rowid OR rowid = old.rowid
+        );
+END;
+
+-- Procedimento para recalcular todas as médias de avaliações dos freelancers
+-- Útil para executar após migrações ou importações de dados
+CREATE PROCEDURE RecalculateFreelancerRatings()
+BEGIN
+    UPDATE FreelancerProfiles fp
+    SET 
+        avg_rating = (
+            SELECT AVG(r.overall_rating)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = fp.user_id
+        ),
+        review_count = (
+            SELECT COUNT(r.review_id)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = fp.user_id
+        );
+END;
