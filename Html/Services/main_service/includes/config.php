@@ -7,9 +7,6 @@ define('DB_PATH', '../../../database/TesteOlga.db');
 // Configuração de paginação
 define('ITEMS_PER_PAGE', 9);
 
-// Configuração de caminhos
-define('BASE_URL', '/main_service'); // Ajuste conforme necessário
-define('ROOT_PATH', $_SERVER['DOCUMENT_ROOT'] . BASE_URL);
 
 // Mapeamento de disponibilidade
 define('AVAILABILITY_MAP', [

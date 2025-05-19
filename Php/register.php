@@ -39,21 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($experience_years < 0) $errors[] = "Anos de experiência não pode ser negativo";
     } 
     elseif ($role === 'manager') {
-        $stmt = $db->prepare("
-            INSERT INTO RestaurantProfiles
-            (user_id, restaurant_name, restaurant_type, description, avg_rating)
-            VALUES
-            (:user_id, :restaurant_name, :restaurant_type, :description, 0)
-        ");
-        $stmt->bindValue(':user_id', $user_id, SQLITE3_INTEGER);
-        $stmt->bindValue(':restaurant_name', $restaurant_name, SQLITE3_TEXT);
-        $stmt->bindValue(':restaurant_type', $restaurant_type, SQLITE3_TEXT);
-        $stmt->bindValue(':description', $description, SQLITE3_TEXT);
+        $restaurant_name = trim($_POST['restaurant_name'] ?? '');
+        $restaurant_type = trim($_POST['restaurant_type'] ?? '');
+        $description = trim($_POST['description'] ?? '');
         
-        if (!$stmt->execute()) {
-            $errors[] = "Erro ao criar perfil de restaurante: " . $db->lastErrorMsg();
-            $db->exec('ROLLBACK');
-        }
+        if (empty($restaurant_name)) $errors[] = "Nome do restaurante é obrigatório";
+        if (empty($restaurant_type)) $errors[] = "Tipo de restaurante é obrigatório";
     }
     else {
         $errors[] = "Perfil inválido selecionado";
@@ -167,17 +158,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Se chegou até aqui, todas as operações foram bem-sucedidas
                         if (empty($errors)) {
                             $db->exec('COMMIT');
+                            
+                            // Armazenar dados do usuário na sessão
                             $_SESSION['user_id'] = $user_id;
                             $_SESSION['user_email'] = $email;
-                            $_SESSION['user_role'] = $role;
+                            $_SESSION['user_role'] = $role_name;
+                            $_SESSION['user_first_name'] = $first_name;
+                            $_SESSION['user_last_name'] = $last_name;
+                            
+                            // Atualizar o timestamp de último login
+                            $stmt = $db->prepare("UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = :user_id");
+                            $stmt->bindValue(':user_id', $user_id, SQLITE3_INTEGER);
+                            $stmt->execute();
+                            
                             $_SESSION['success'] = "Registo realizado com sucesso!";
                             
                             // Redirecionar para a página apropriada após o registro
-<<<<<<< HEAD
                             header("Location: ../../../Html/Services/main_service/index.php");
-=======
-                            header("Location: ../../index.php");
->>>>>>> 3afb210c91108a714c84a4104e29caca18fdfd36
                             exit;
                         } else {
                             $db->exec('ROLLBACK');
@@ -196,12 +193,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['errors'] = $errors;
         // Armazena os dados do formulário para preencher novamente
         $_SESSION['form_data'] = $_POST;
-        header("Location: ../../Html/Authentication/register.html");
+        header("Location: ../Html/Log/register.html");
         exit;
     }
 } else {
     // Se não for um POST, redireciona para o formulário
-    header("Location: ../../Html/Authentication/register.html");
+    header("Location: ../Html/Log/register.html");
     exit;
 }
 ?>

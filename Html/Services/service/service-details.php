@@ -838,28 +838,12 @@ include 'includes/header.php';
     </div>
 </section>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-
-<script>
-    $(document).ready(function() {
-        // Inicializar animações AOS
-        AOS.init({
-            duration: 800,
-            easing: 'ease-in-out',
-            once: true
-        });
-        
-        // Inicializar tabs
-        $('#serviceDetailsTabs a').on('click', function (e) {
-            e.preventDefault();
-            $(this).tab('show');
-        });
-    });
-</script>
-
+<script src="../../../JavaScript/main.js"></script>
 <?php
 // Incluir o rodapé do site
 include '../components/footer.php';

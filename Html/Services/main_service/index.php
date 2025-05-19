@@ -8,9 +8,9 @@ session_start();
 
 // Incluir arquivos necessários
 require_once 'includes/config.php';
-require_once 'components/database.php';
-require_once 'includes/utils.php';
-require_once 'includes/services-repository.php';
+require_once '../components/database.php';
+require_once '../components/utils.php';
+require_once '../components/services-repository.php';
 include_once 'components/header.php';
 // Obter parâmetros de filtro
 $filterParams = getFilterParams();
@@ -80,10 +80,10 @@ extract($filterParams);
         
         <div class="container">
             <div class="main-content">
-                <?php include 'components/filters.php'; ?>
+                <?php include '../components/filters.php'; ?>
                 
                 <div class="services-container">
-                    <?php include 'components/service-header.php'; ?>
+                    <?php include '../components/service-header.php'; ?>
                     
                     <div class="services-grid">
                         <?php 
@@ -91,10 +91,10 @@ extract($filterParams);
                             $delay = 0;
                             foreach ($services as $service):
                                 $delay += 100;
-                                include 'components/service-card.php';
+                                include '../components/service-card.php';
                             endforeach;
                         else:
-                            include 'components/no-results.php';
+                            include '../components/no-results.php';
                         endif; 
                         ?>
                     </div>
@@ -109,6 +109,6 @@ extract($filterParams);
     
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="../../../JavaScript/main.js"></script>
-    <script src="assets/js/services.js"></script>
+    <script src="../../../JavaScript/services.js"></script>
 </body>
 </html>
