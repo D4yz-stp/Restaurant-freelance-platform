@@ -47,7 +47,7 @@ $description = truncateText($description);
             </div>
             <div class="service-footer">
                 <div class="service-price">
-                    R$ <?php echo $price; ?> <span><?php echo $priceType; ?></span>
+                    <?php echo $price; ?> <span><?php echo $priceType; ?></span>
                 </div>
                 <div class="service-rating">
                     <i class="fas fa-star rating-star"></i>

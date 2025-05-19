@@ -930,3 +930,55 @@ img {
     grid-template-columns: 1fr;
   }
 }
+
+.provider-header {
+    margin: 0.5rem 0;
+}
+
+.provider-experience {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.2rem;
+    background-color: #f8f9fa;
+    border-radius: 25px;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.provider-experience:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.provider-experience i {
+    color: #ffc107;
+    margin-right: 0.8rem;
+    font-size: 1.1rem;
+    background: linear-gradient(45deg, #ffd700, #ffc107);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Efeito de brilho no ícone */
+.provider-experience i::before {
+    text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .provider-experience {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .provider-experience i {
+        font-size: 1rem;
+        margin-right: 0.6rem;
+    }
+}

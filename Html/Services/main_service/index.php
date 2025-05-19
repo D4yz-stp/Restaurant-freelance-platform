@@ -80,10 +80,10 @@ extract($filterParams);
         
         <div class="container">
             <div class="main-content">
-                <?php include '../components/filters.php'; ?>
+                <?php include 'components/filters.php'; ?>
                 
                 <div class="services-container">
-                    <?php include '../components/service-header.php'; ?>
+                    <?php include 'components/service-header.php'; ?>
                     
                     <div class="services-grid">
                         <?php 
@@ -94,7 +94,7 @@ extract($filterParams);
                                 include '../components/service-card.php';
                             endforeach;
                         else:
-                            include '../components/no-results.php';
+                            include 'components/no-results.php';
                         endif; 
                         ?>
                     </div>

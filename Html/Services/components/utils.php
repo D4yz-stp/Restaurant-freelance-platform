@@ -52,29 +52,33 @@ function buildQueryURL($page = null, $additionalParams = []) {
 }
 
 /**
- * Trunca um texto até um comprimento específico
- * 
+ * Trunca uma string para o comprimento especificado
+ *
  * @param string $text Texto a ser truncado
- * @param int $maxLength Comprimento máximo
+ * @param int $length Comprimento máximo
+ * @param string $append String a ser anexada ao final do texto truncado
  * @return string Texto truncado
  */
-function truncateText($text, $maxLength = 120) {
-    if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength - 3) . '...';
+function truncateText($text, $length = 100, $append = '...') {
+    $text = strip_tags($text);
+    if (strlen($text) > $length) {
+        $text = substr($text, 0, $length);
+        $text = substr($text, 0, strrpos($text, ' '));
+        $text .= $append;
     }
     return $text;
 }
 
+
 /**
- * Formata um valor para exibição como moeda
- * 
+ * Formata valores monetários para o padrão brasileiro
+ *
  * @param float $value Valor a ser formatado
- * @return string Valor formatado como moeda
+ * @return string Valor formatado
  */
 function formatCurrency($value) {
-    return number_format($value, 2, ',', '.');
+    return '€ ' . number_format($value, 2, ',', '.');
 }
-
 /**
  * Obtém parâmetros de filtro da requisição
  * 

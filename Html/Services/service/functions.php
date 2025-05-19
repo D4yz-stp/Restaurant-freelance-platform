@@ -3,33 +3,6 @@
  * Funções de utilidade para o sistema de freelancers
  */
 
-/**
- * Sanitiza strings para evitar ataques XSS
- *
- * @param string $str String a ser sanitizada
- * @return string String sanitizada
- */
-function safeHtml($str) {
-    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Trunca uma string para o comprimento especificado
- *
- * @param string $text Texto a ser truncado
- * @param int $length Comprimento máximo
- * @param string $append String a ser anexada ao final do texto truncado
- * @return string Texto truncado
- */
-function truncateText($text, $length = 100, $append = '...') {
-    $text = strip_tags($text);
-    if (strlen($text) > $length) {
-        $text = substr($text, 0, $length);
-        $text = substr($text, 0, strrpos($text, ' '));
-        $text .= $append;
-    }
-    return $text;
-}
 
 /**
  * Formata datas para o formato brasileiro
@@ -197,14 +170,4 @@ function isValidEmail($email) {
 function isStrongPassword($password) {
     // Pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial
     return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/', $password);
-}
-
-/**
- * Formata valores monetários para o padrão brasileiro
- *
- * @param float $value Valor a ser formatado
- * @return string Valor formatado
- */
-function formatCurrency($value) {
-    return 'R$ ' . number_format($value, 2, ',', '.');
 }
