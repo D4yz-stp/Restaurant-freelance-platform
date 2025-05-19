@@ -249,6 +249,9 @@ ALTER TABLE FreelancerProfiles ADD COLUMN review_count INTEGER DEFAULT 0;
 
 ALTER TABLE FreelancerProfiles ADD COLUMN availability_details TEXT;
 
+
+
+
 -- Inserir dados na tabela Users
 INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
 ('João', 'Silva', 'joao.silva@example.com', 'hashed_password_1', '11987654321', 'Brasil', 'São Paulo'),
@@ -324,7 +327,7 @@ INSERT INTO Payments (contract_id, amount, payment_method, status) VALUES
 INSERT INTO Reviews (contract_id, reviewer_id, reviewee_id, overall_rating, comment) VALUES
 (1, 2, 1, 5, 'Excelente serviço!'),
 (3, 4, 1, 3, 'Profissional excepcional! Superou todas as expectivas'),
-(1, 1, 2, 4, 'Ótimo evento!');
+(2, 4, 3, 2, 'Bom serviço de limpeza, pontual e eficiente.');
 
 -- Inserir dados na tabela Conversations
 INSERT INTO Conversations (restaurant_id, freelancer_id) VALUES
@@ -384,6 +387,11 @@ ALTER TABLE Services ADD COLUMN avg_rating REAL DEFAULT 0;
 UPDATE FreelancerProfiles SET availability_details = 'Disponível nos finais de semana' WHERE profile_id = 1;
 UPDATE FreelancerProfiles SET availability_details = 'Disponível durante a semana' WHERE profile_id = 2;
 
+
+
+--------------------------------------------------------------
+
+
 -- Remover o valor default para a média de avaliações do freelancer
 -- Primeiro, alteramos a coluna para remover o default value de avg_rating
 ALTER TABLE FreelancerProfiles DROP COLUMN avg_rating;
@@ -409,21 +417,19 @@ WHERE
 GROUP BY 
     fp.profile_id;
 
--- Criar um TRIGGER que atualiza automaticamente a média de avaliações do freelancer
--- quando uma nova avaliação é adicionada, atualizada ou removida
-CREATE TRIGGER update_freelancer_avg_rating
-AFTER INSERT OR UPDATE OR DELETE ON Reviews
+-- Trigger for INSERT
+CREATE TRIGGER update_freelancer_avg_rating_insert
+AFTER INSERT ON Reviews
 BEGIN
-    -- Atualizar as médias de avaliações dos freelancers afetados
-    UPDATE FreelancerProfiles 
-    SET 
+    UPDATE FreelancerProfiles
+    SET
         avg_rating = (
             SELECT AVG(r.overall_rating)
             FROM Reviews r
             JOIN Users u ON r.reviewee_id = u.user_id
             WHERE u.user_id = (
-                SELECT user_id 
-                FROM FreelancerProfiles 
+                SELECT user_id
+                FROM FreelancerProfiles
                 WHERE profile_id = FreelancerProfiles.profile_id
             )
         ),
@@ -432,35 +438,102 @@ BEGIN
             FROM Reviews r
             JOIN Users u ON r.reviewee_id = u.user_id
             WHERE u.user_id = (
-                SELECT user_id 
-                FROM FreelancerProfiles 
+                SELECT user_id
+                FROM FreelancerProfiles
                 WHERE profile_id = FreelancerProfiles.profile_id
             )
         )
-    WHERE 
+    WHERE
         user_id IN (
-            SELECT reviewee_id 
-            FROM Reviews 
-            WHERE rowid = new.rowid OR rowid = old.rowid
+            SELECT reviewee_id
+            FROM Reviews
+            WHERE rowid = new.rowid
+        );
+END;
+
+-- Trigger for UPDATE
+CREATE TRIGGER update_freelancer_avg_rating_update
+AFTER UPDATE ON Reviews
+BEGIN
+    UPDATE FreelancerProfiles
+    SET
+        avg_rating = (
+            SELECT AVG(r.overall_rating)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id
+                FROM FreelancerProfiles
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        ),
+        review_count = (
+            SELECT COUNT(r.review_id)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id
+                FROM FreelancerProfiles
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        )
+    WHERE
+        user_id IN (
+            SELECT reviewee_id
+            FROM Reviews
+            WHERE rowid = new.rowid
+        );
+END;
+
+-- Trigger for DELETE
+CREATE TRIGGER update_freelancer_avg_rating_delete
+AFTER DELETE ON Reviews
+BEGIN
+    UPDATE FreelancerProfiles
+    SET
+        avg_rating = (
+            SELECT AVG(r.overall_rating)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id
+                FROM FreelancerProfiles
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        ),
+        review_count = (
+            SELECT COUNT(r.review_id)
+            FROM Reviews r
+            JOIN Users u ON r.reviewee_id = u.user_id
+            WHERE u.user_id = (
+                SELECT user_id
+                FROM FreelancerProfiles
+                WHERE profile_id = FreelancerProfiles.profile_id
+            )
+        )
+    WHERE
+        user_id IN (
+            SELECT reviewee_id
+            FROM Reviews
+            WHERE rowid = old.rowid
         );
 END;
 
 -- Procedimento para recalcular todas as médias de avaliações dos freelancers
 -- Útil para executar após migrações ou importações de dados
-CREATE PROCEDURE RecalculateFreelancerRatings()
-BEGIN
-    UPDATE FreelancerProfiles fp
-    SET 
-        avg_rating = (
-            SELECT AVG(r.overall_rating)
-            FROM Reviews r
-            JOIN Users u ON r.reviewee_id = u.user_id
-            WHERE u.user_id = fp.user_id
-        ),
-        review_count = (
-            SELECT COUNT(r.review_id)
-            FROM Reviews r
-            JOIN Users u ON r.reviewee_id = u.user_id
-            WHERE u.user_id = fp.user_id
-        );
-END;
+-- Recalculate all freelancer ratings
+UPDATE FreelancerProfiles
+SET
+    avg_rating = (
+        SELECT AVG(r.overall_rating)
+        FROM Reviews r
+        JOIN Users u ON r.reviewee_id = u.user_id
+        WHERE u.user_id = FreelancerProfiles.user_id
+    ),
+    review_count = (
+        SELECT COUNT(r.review_id)
+        FROM Reviews r
+        JOIN Users u ON r.reviewee_id = u.user_id
+        WHERE u.user_id = FreelancerProfiles.user_id
+    );
+-----------------------------------------------------------

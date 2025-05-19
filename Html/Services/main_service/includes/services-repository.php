@@ -25,14 +25,19 @@ class ServicesRepository {
                 s.base_price,
                 s.price_type,
                 s.service_image_url,
+                s.freelancer_id,
                 u.first_name,
                 u.last_name,
                 u.profile_image_url,
                 fp.experience_years,
                 fp.availability,
                 fp.availability_details,
-                fp.avg_rating,
-                fp.review_count
+                (SELECT AVG(r.overall_rating) FROM Reviews r 
+                 JOIN Contracts c ON r.contract_id = c.contract_id 
+                 WHERE c.service_id = s.service_id) AS avg_rating,
+                (SELECT COUNT(r.review_id) FROM Reviews r 
+                 JOIN Contracts c ON r.contract_id = c.contract_id 
+                 WHERE c.service_id = s.service_id) AS review_count
             FROM 
                 Services s
             JOIN 
@@ -112,7 +117,7 @@ class ServicesRepository {
     private function addSortingToQuery($query, $sort, $search, &$queryParams) {
         switch ($sort) {
             case 'rating':
-                $query .= " ORDER BY fp.avg_rating DESC, fp.review_count DESC";
+                $query .= " ORDER BY avg_rating DESC, review_count DESC";
                 break;
             case 'price-asc':
                 $query .= " ORDER BY s.base_price ASC";
@@ -130,10 +135,10 @@ class ServicesRepository {
                         CASE WHEN s.title LIKE :search_order THEN 1
                             WHEN s.description LIKE :search_order THEN 2
                             ELSE 3 END,
-                        fp.avg_rating DESC";
+                        avg_rating DESC";
                     $queryParams[':search_order'] = "%$search%";
                 } else {
-                    $query .= " ORDER BY fp.avg_rating DESC, fp.review_count DESC";
+                    $query .= " ORDER BY avg_rating DESC, review_count DESC";
                 }
                 break;
         }
@@ -216,4 +221,3 @@ class ServicesRepository {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-

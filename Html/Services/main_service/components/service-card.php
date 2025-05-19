@@ -1,11 +1,10 @@
 <?php
 /**
  * Componente de card de serviço
- * 
+ *
  * @param array $service Dados do serviço
  * @param int $delay Delay para animação AOS
  */
-
 // Tratamento para imagens
 $serviceImage = getImageUrl($service['service_image_url'], "/api/placeholder/600/400");
 $profileImage = getImageUrl($service['profile_image_url'], "/api/placeholder/100/100");
@@ -15,7 +14,12 @@ $fullName = safeHtml($service['first_name'] . ' ' . $service['last_name']);
 $price = formatCurrency($service['base_price']);
 $priceType = $service['price_type'] === 'hourly' ? '/hora' : '';
 $availability = formatAvailability($service['availability']);
-$rating = number_format($service['avg_rating'], 1, '.', '');
+
+// Verificar se existe avaliação ou usar valor padrão
+$rating = isset($service['avg_rating']) && $service['avg_rating'] !== null ? 
+    number_format($service['avg_rating'], 1, '.', '') : 
+    "0.0";
+$reviewCount = isset($service['review_count']) ? $service['review_count'] : 0;
 
 // Limitar tamanho da descrição
 $description = safeHtml($service['service_description']);
@@ -47,11 +51,10 @@ $description = truncateText($description);
                 </div>
                 <div class="service-rating">
                     <i class="fas fa-star rating-star"></i>
-                    <?php echo $rating; ?> 
-                    <span class="review-count">(<?php echo $service['review_count']; ?>)</span>
+                    <?php echo $rating; ?>
+                    <span class="review-count">(<?php echo $reviewCount; ?>)</span>
                 </div>
             </div>
-            
         </div>
     </div>
-</a>    
+</a>

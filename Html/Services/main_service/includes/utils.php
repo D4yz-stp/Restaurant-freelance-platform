@@ -112,3 +112,40 @@ function getImageUrl($imagePath, $placeholder = '/api/placeholder/600/400') {
 function safeHtml($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
+
+/**
+ * Obtém as avaliações de um serviço
+ * 
+ * @param PDO $db Conexão com o banco de dados
+ * @param int $serviceId ID do serviço
+ * @param int $freelancerId ID do freelancer
+ * @param int $limit Limite de avaliações a retornar
+ * @return array Lista de avaliações
+ */
+
+function getServiceReviews($db, $serviceId, $freelancerId, $limit = 10) {
+    $query = "SELECT
+                r.review_id, r.overall_rating, r.comment, r.created_at,
+                u.first_name, u.last_name, u.profile_image_url,
+                c.contract_id, c.title AS contract_title
+            FROM 
+                Reviews r
+            JOIN 
+                Contracts c ON r.contract_id = c.contract_id
+            JOIN 
+                Users u ON r.reviewer_id = u.user_id
+            WHERE 
+                c.service_id = :service_id
+                AND r.reviewee_id = (SELECT user_id FROM FreelancerProfiles WHERE profile_id = :freelancer_id)
+            ORDER BY 
+                r.created_at DESC
+            LIMIT :limit";
+    
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(':service_id', $serviceId, PDO::PARAM_INT);
+    $stmt->bindParam(':freelancer_id', $freelancerId, PDO::PARAM_INT);
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
