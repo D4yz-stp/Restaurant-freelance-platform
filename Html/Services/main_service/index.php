@@ -91,7 +91,7 @@ extract($filterParams);
                             $delay = 0;
                             foreach ($services as $service):
                                 $delay += 100;
-                                include '../components/service-card.php';
+                                include 'components/service-card.php';
                             endforeach;
                         else:
                             include 'components/no-results.php';
