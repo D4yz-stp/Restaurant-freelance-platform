@@ -48,7 +48,7 @@ extract($filterParams);
     <link rel="stylesheet" href="../../../Css/header+button.css">
     <link rel="stylesheet" href="../../../Css/global.css">
     <link rel="stylesheet" href="../../../Css/footer.css">
-    <link rel="stylesheet" href="../../../Css/service.css">
+    <link rel="stylesheet" href="../../../Css/main_service.css">
 </head>
 <body>
     <?php include '../components/header.php'; ?>

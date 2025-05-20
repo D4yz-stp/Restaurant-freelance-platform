@@ -9,7 +9,7 @@ $user_data = null;
 if ($is_logged_in) {
     try {
         // Assegurar que estamos usando o mesmo banco de dados que o login
-        $db_path = __DIR__ . '/../../database/TesteOlga.db'; // Ajuste este caminho conforme a estrutura real
+        $db_path = __DIR__ . '../../../database/TesteOlga.db'; // Ajuste este caminho conforme a estrutura real
         
         // Para debug - verificar se o arquivo existe
         if (!file_exists($db_path)) {

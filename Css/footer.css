@@ -1,292 +1,208 @@
 /* =================================================================
-   PROFILE PAGE STYLING - MATCHING INDEX.PHP DESIGN SYSTEM
+   RODAPÉ (FOOTER)
 ================================================================= */
-
-/* Import fonts (already imported in index.php) */
-/* Using same root variables from global.css */
-
-/* =================================================================
-   PROFILE SECTION STRUCTURE 
-================================================================= */
-.profile-section {
-    min-height: 100vh;
-    background: var(--gradient-blue);
-    display: flex;
-    align-items: center;
-    padding: 6rem 0;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Dot pattern background (same as hero section) */
-.profile-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
-    opacity: 0.3;
-}
-
-.profile-container {
-    width: 100%;
-    max-width: var(--container-max-width);
-    margin: 0 auto;
-    padding: 0 var(--container-padding);
-    position: relative;
-    z-index: 1;
-}
-
-/* =================================================================
-   PROFILE HEADER 
-================================================================= */
-.profile-header {
-    text-align: center;
-    margin-bottom: 3rem;
-    color: var(--color-text-light);
-}
-
-.profile-header h2 {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-}
-
-.profile-subtitle {
-    font-size: clamp(1.25rem, 3vw, 1.5rem);
-    margin-bottom: 2rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-.profile-avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin: 0 auto 2rem;
-    border: 4px solid var(--color-accent);
-    box-shadow: var(--shadow-md);
-}
-
-/* =================================================================
-   PROFILE CONTENT SECTIONS 
-================================================================= */
-.profile-content-section {
-    padding: 6rem 0;
-    background: var(--color-gray);
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: 4rem;
-}
-
-.section-header h2 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
-}
-
-.profile-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Profile cards matching feature cards style */
-.profile-card {
-    border-radius: var(--border-radius-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    padding: 2rem;
-    transition: transform var(--transition);
-    background: white;
-    height: 100%;
-}
-
-.profile-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-}
-
-.profile-card h3 {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-    color: var(--color-primary);
-}
-
-/* Color variations matching index.php features */
-.profile-card.shard1 { 
-    background: var(--gradient-blue); 
-    color: var(--color-text-light);
-}
-.profile-card.shard2 { 
-    background: var(--gradient-green); 
-    color: var(--color-text-light);
-}
-.profile-card.shard3 { 
-    background: var(--gradient-orange); 
-    color: var(--color-text-light);
-}
-
-/* Info boxes */
-.info-box {
-    background: white;
-    border-radius: var(--border-radius-md);
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-sm);
-}
-
-.info-box p {
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-}
-
-.info-box strong {
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
-/* =================================================================
-   FORM ELEMENTS (EDIT MODE)
-================================================================= */
-.edit-mode .form-group {
-    margin-bottom: 1.5rem;
-}
-
-.edit-mode label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
-}
-
-.edit-mode input,
-.edit-mode select,
-.edit-mode textarea {
-    width: 100%;
-    padding: 0.8rem 1rem;
-    border: 2px solid #ddd;
-    border-radius: var(--border-radius-md);
-    font-family: var(--font-family);
-    font-size: 1rem;
-    transition: border-color var(--transition);
-}
-
-.edit-mode input:focus,
-.edit-mode select:focus,
-.edit-mode textarea:focus {
-    border-color: var(--color-primary);
-    outline: none;
-}
-
-.edit-mode textarea {
-    min-height: 150px;
-    resize: vertical;
-}
-
-/* =================================================================
-   BUTTONS (MATCHING HEADER+BUTTON.CSS)
-================================================================= */
-.profile-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 2rem;
-}
-
-.btn {
-    display: inline-block;
-    padding: 0.8rem 1.5rem;
-    border-radius: var(--border-radius-full);
-    text-decoration: none;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition);
-    border: none;
-}
-
-.btn-primary {
+.main-footer {
     background: var(--color-accent);
     color: var(--color-primary);
+    padding: 4rem 0 2rem;
 }
 
-.btn-primary:hover, 
-.btn-primary:focus {
-    background: var(--color-accent-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.footer-top {
+    text-align: center;
+    margin-bottom: 3rem;
 }
 
-.btn-outline {
-    background: transparent;
+.footer-title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Link para telefone com ícone */
+.phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     color: var(--color-primary);
-    border: 2px solid var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    transition: color var(--transition);
 }
 
-.btn-outline:hover,
-.btn-outline:focus {
-    background: rgba(0, 35, 102, 0.1);
-    transform: translateY(-2px);
+.phone-link:hover {
+    color: var(--color-primary-dark);
 }
 
-.btn-yellow {
-    background-color: #FFDD00;
-    color: #002366;
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.footer-col {
+    padding: 1rem;
+}
+
+.footer-col h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Lista de links no rodapé */
+.footer-links {
+    list-style: none;
+}
+
+.footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+    color: var(--color-primary);
+    text-decoration: none;
+    position: relative;
+}
+
+.footer-links a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: var(--color-primary);
+    transition: width var(--transition);
+}
+
+.footer-links a:hover::after {
+    width: 100%;
+}
+
+/* Link para email */
+.email-link {
+    color: var(--color-primary);
+    text-decoration: none;
     font-weight: bold;
 }
 
-.btn-yellow:hover {
-    background-color: #e6c800;
-    transform: translateY(-2px);
+/* Ícones de redes sociais */
+.social-icons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
 }
 
-.form-actions {
+.social-icons a {
+    color: var(--color-primary);
+    transition: transform var(--transition);
+    display: flex;
+    align-items: center;
+}
+
+.social-icons a:hover {
+    transform: translateY(-3px);
+}
+
+/* Formulário de newsletter */
+.newsletter-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.newsletter-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    font-family: inherit;
+}
+
+/* Seletor de idiomas */
+.language-switcher {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.language-switcher a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition);
+}
+
+.language-switcher a.active {
+    background: var(--color-primary);
+    color: var(--color-accent);
+}
+
+.language-switcher a:hover:not(.active) {
+    background: rgba(0, 35, 102, 0.1);
+}
+
+/* Rodapé legal e copyright */
+.footer-legal {
     display: flex;
     justify-content: space-between;
-    margin-top: 2rem;
-    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 35, 102, 0.2);
 }
 
+.back-to-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform var(--transition);
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+}
+
+.copyright {
+    font-size: 0.875rem;
+    color: var(--color-primary);
+}
 /* =================================================================
-   RESPONSIVE DESIGN (MATCHING INDEX.CSS BREAKPOINTS)
+   ESTILOS RESPONSIVOS (MEDIA QUERIES)
 ================================================================= */
 @media (max-width: 768px) {
-    .profile-actions {
+    
+    .footer-legal {
         flex-direction: column;
-        align-items: center;
+        gap: 1rem;
+        text-align: center;
     }
     
-    .profile-actions .btn {
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .newsletter-form button {
         width: 100%;
-        max-width: 300px;
-    }
-    
-    .form-actions {
-        flex-direction: column;
     }
 }
 
 @media (max-width: 480px) {
-    .profile-grid {
-        grid-template-columns: 1fr;
+    :root {
+        --container-padding: 1rem;
     }
     
-    .profile-avatar {
-        width: 120px;
-        height: 120px;
+    .features-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 /* =================================================================
-   ANIMATIONS (MATCHING INDEX.CSS)
+   ANIMAÇÕES
 ================================================================= */
 @keyframes pulse {
     0% { transform: scale(1); }
@@ -296,14 +212,4 @@
 
 .pulse {
     animation: pulse 2s infinite;
-}
-
-/* Restaurant type highlight */
-.restaurant-type {
-    font-weight: bold;
-    color: var(--color-primary);
-    background: rgba(0, 35, 102, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--border-radius-sm);
-    display: inline-block;
 }
