@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 // Verifica se o usuário está logado
 $is_logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 // Se o usuário estiver logado, busca informações adicionais do banco de dados

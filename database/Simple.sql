@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS Roles;
 DROP TABLE IF EXISTS Users;
 
 
+
 -- Tabela de Usuários
 CREATE TABLE Users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
