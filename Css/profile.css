@@ -1,0 +1,167 @@
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root {
+  --color-primary: #002366;
+  --color-accent: #FFD700;
+  --color-accent-dark: #E6C200;
+  --color-bg-light: #ffffff;
+  --color-text: #333;
+  --color-gray: #f5f5f5;
+
+  --font-family: 'Poppins', sans-serif;
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  --border-radius: 10px;
+  --transition: 0.3s ease;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-light);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* Container */
+.perfil-container {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+}
+
+/* Header */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+  color: var(--color-primary);
+  font-size: rem;
+  font-weight: 400;
+  margin-top: 4rem;
+}
+
+/* Info */
+.info-box {
+  background-color: var(--color-gray);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.info-box p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.info-box strong {
+  color: var(--color-primary);
+}
+
+/* Edit Mode */
+.edit-mode .form-group {
+  margin-bottom: 1rem;
+}
+
+.edit-mode label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-primary);
+}
+
+.edit-mode input,
+.edit-mode select,
+.edit-mode textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.edit-mode textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+hr {
+  margin: 2rem 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-dark);
+}
+
+.btn-secondary {
+  background-color: #ccc;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background-color: #bbb;
+}
+
+/* Actions */
+.profile-actions {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Restaurant Type */
+.restaurant-type {
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+/* ======== Adjust "Meu Perfil" Position ======== */
+.profile-header {
+    margin-top: 4rem; /* Pushes the title down */
+    margin-bottom: 2rem; /* Optional: Adjust spacing below the title */
+}
+
+/* Ensures the profile container starts lower on the page */
+.profile-main {
+    padding-top: 3rem; /* Adds space at the top of the profile section */
+}

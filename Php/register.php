@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($experience_years < 0) $errors[] = "Anos de experiência não pode ser negativo";
     } 
     elseif ($role === 'manager') {
+        // MOVED THIS VALIDATION BEFORE DB OPERATIONS
         $restaurant_name = trim($_POST['restaurant_name'] ?? '');
         $restaurant_type = trim($_POST['restaurant_type'] ?? '');
         $description = trim($_POST['description'] ?? '');
@@ -138,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $db->exec('ROLLBACK');
                             }
                         } elseif ($role === 'manager') {
+                            // MOVED THESE VARIABLE ASSIGNMENTS UP TO VALIDATION SECTION
                             $stmt = $db->prepare("
                                 INSERT INTO RestaurantProfiles
                                 (user_id, restaurant_name, restaurant_type, description, avg_rating)
@@ -158,19 +160,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Se chegou até aqui, todas as operações foram bem-sucedidas
                         if (empty($errors)) {
                             $db->exec('COMMIT');
-                            
-                            // Armazenar dados do usuário na sessão
                             $_SESSION['user_id'] = $user_id;
                             $_SESSION['user_email'] = $email;
-                            $_SESSION['user_role'] = $role_name;
-                            $_SESSION['user_first_name'] = $first_name;
-                            $_SESSION['user_last_name'] = $last_name;
-                            
-                            // Atualizar o timestamp de último login
-                            $stmt = $db->prepare("UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = :user_id");
-                            $stmt->bindValue(':user_id', $user_id, SQLITE3_INTEGER);
-                            $stmt->execute();
-                            
+                            $_SESSION['user_role'] = $role;
                             $_SESSION['success'] = "Registo realizado com sucesso!";
                             
                             // Redirecionar para a página apropriada após o registro
@@ -193,12 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['errors'] = $errors;
         // Armazena os dados do formulário para preencher novamente
         $_SESSION['form_data'] = $_POST;
-        header("Location: ../Html/Log/register.html");
+        header("Location: ../../Html/Log/register.html");
         exit;
     }
 } else {
     // Se não for um POST, redireciona para o formulário
-    header("Location: ../Html/Log/register.html");
+    header("Location: ../../Html/Log/register.html");
     exit;
 }
 ?>
