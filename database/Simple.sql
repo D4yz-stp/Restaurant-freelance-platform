@@ -250,7 +250,7 @@ ALTER TABLE FreelancerProfiles ADD COLUMN review_count INTEGER DEFAULT 0;
 
 ALTER TABLE FreelancerProfiles ADD COLUMN availability_details TEXT;
 
-
+ALTER TABLE Conversations ADD COLUMN job_id INTEGER REFERENCES Services(service_id);
 
 
 -- Inserir dados na tabela Users
