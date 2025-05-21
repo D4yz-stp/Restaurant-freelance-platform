@@ -51,7 +51,7 @@
             <?php if ($isRestaurant && !$isOwner): ?>
                 <div class="contact-options">
                     <?php if ($hasConversation): ?>
-                        <a href="../../Interaction/messages.php?id=<?php echo $conversation_id; ?>" class="btn btn-primary">
+                        <a href="../../ieraction/chat.php?conversation_id=<?php echo $conversation_id; ?>" class="btn btn-primary">
                             <i class="fas fa-comments"></i> Continuar Conversa
                         </a>
                     <?php else: ?>
