@@ -78,11 +78,7 @@ error_log("Sessão user_first_name: " . (isset($_SESSION['user_first_name']) ? $
                     </div>
                     <div class="user-dropdown-content">
                         <a href="/Html/Log/profile.php">Meu Perfil</a>
-                        <?php if ($user_data['role_name'] === 'freelancer'): ?>
-                            <a href="/Html/Profile/freelancer.php">Perfil Freelancer</a>
-                        <?php elseif ($user_data['role_name'] === 'restaurant'): ?>
-                            <a href="/Html/Profile/restaurant.php">Perfil Restaurante</a>
-                        <?php endif; ?>
+                        <a href="/Html/Log/edit_profile.php">Contratos</a>
                         <a href="/Html/Services/main_service/index.php">Serviços</a>
                         <a href="/Html/Log/logout.html">Sair</a>
                     </div>
