@@ -118,9 +118,45 @@ $edit_mode = isset($_GET['edit']) && $_GET['edit'] === 'true';
     <meta charset="UTF-8">
     <title>Perfil - OlgaRJ</title>
     <link rel="stylesheet" href="../../Css/profile.css">
+    <link rel="stylesheet" href="../../Css/global.css">
+    <link rel="stylesheet" href="../../Css/index.css">
+    <link rel="stylesheet" href="../../Css/header+button.css">
+    <link rel="stylesheet" href="../../Css/footer.css">
 </head>
 <body>
-    <div class="perfil-container">
+    <header class="main-header">
+        <div class="container header-container">
+            <div class="header-brand">
+                <a href="/"><h1>OlgaRJ</h1></a>
+            </div>
+            <nav class="header-nav">
+                <?php if (isset($_SESSION['user_first_name'])): ?>
+                    <div class="user-dropdown">
+                        <div class="user-info">
+                            <div class="user-avatar"><?= strtoupper(substr($_SESSION['user_first_name'], 0, 1)) ?></div>
+                            <span class="user-name"><?= htmlspecialchars($_SESSION['user_first_name']) ?></span>
+                            <span class="dropdown-icon">▼</span>
+                        </div>
+                        <div class="user-dropdown-content">
+                            <a href="/Html/Log/profile.php">Meu Perfil</a>
+                            <?php if ($_SESSION['user_role'] === 'freelancer'): ?>
+                                <a href="/Html/Profile/freelancer.php">Perfil Freelancer</a>
+                            <?php elseif ($_SESSION['user_role'] === 'restaurant'): ?>
+                                <a href="/Html/Profile/restaurant.php">Perfil Restaurante</a>
+                            <?php endif; ?>
+                            <a href="/Html/Services/index.php">Serviços</a>
+                            <a href="/Html/Log/logout.php">Sair</a>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <a href="/Html/Log/login.html" class="btn btn-primary">Entrar</a>
+                    <a href="/Html/Log/register.html" class="btn btn-outline">Cadastrar</a>
+                <?php endif; ?>
+            </nav>
+        </div>
+    </header>
+
+        <div class="perfil-container">
         <div class="profile-header">
             <h2>Meu Perfil</h2>
         </div>

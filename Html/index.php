@@ -17,9 +17,6 @@ include 'header.php';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="../Css/index.css">
-    <link rel="stylesheet" href="../Css/footer.css">
-    <link rel="stylesheet" href="../Css/header+button.css">
-    <link rel="stylesheet" href="../Css/global.css">
 </head>
 <body>
     <?php include __DIR__ . '/Services/components/header.php'; ?>
