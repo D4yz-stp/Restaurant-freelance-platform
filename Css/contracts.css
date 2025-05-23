@@ -1,0 +1,260 @@
+/* Estilos gerais */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f7fa;
+}
+
+.contracts-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.contracts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.contracts-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.8em;
+}
+
+/* Cartão de contrato */
+.contract-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.contract-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.contract-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.2em;
+    flex: 1;
+}
+
+.contract-status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-transform: capitalize;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Cores de status */
+.status-ativo {
+    background-color: #e6f7ee;
+    color: #0d8050;
+}
+
+.status-pendente {
+    background-color: #fff8e6;
+    color: #e6a700;
+}
+
+.status-concluído {
+    background-color: #f0f7ff;
+    color: #006fcf;
+}
+
+.status-aceite {
+    background-color: #e6f7ee;
+    color: #0d8050;
+}
+
+.status-recusado {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* Detalhes do contrato */
+.detail-row {
+    display: flex;
+    margin-bottom: 10px;
+    line-height: 1.5;
+    flex-wrap: wrap;
+}
+
+.detail-label {
+    font-weight: 600;
+    min-width: 150px;
+    color: #555;
+    margin-right: 10px;
+}
+
+.detail-value {
+    flex: 1;
+    min-width: 200px;
+}
+
+.detail-value.time-remaining {
+    color: #d32f2f;
+    font-weight: 500;
+}
+
+.contact-info {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 5px;
+}
+
+/* Botões */
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-right: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.2s;
+}
+
+.btn i {
+    font-size: 0.9em;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.contract-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed #eee;
+    display: flex;
+    gap: 10px;
+}
+
+/* Formulário */
+.contract-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-actions {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 40px;
+    color: #7f8c8d;
+    font-size: 1.1em;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .contracts-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .detail-label {
+        min-width: 100%;
+    }
+}
+
+.time-remaining {
+    font-weight: 500;
+}
+.time-remaining[data-end] {
+    color: #28a745; /* verde para tempo restante */
+}
+.time-remaining:not([data-end]) {
+    color: #dc3545; /* vermelho para expirado */
+}

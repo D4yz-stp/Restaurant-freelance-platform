@@ -78,7 +78,7 @@ error_log("Sessão user_first_name: " . (isset($_SESSION['user_first_name']) ? $
                     </div>
                     <div class="user-dropdown-content">
                         <a href="/Html/Log/profile.php">Meu Perfil</a>
-                        <a href="/Html/Log/edit_profile.php">Contratos</a>
+                        <a href="/Php/contracts.php">Contratos</a>
                         <a href="/Html/Services/main_service/index.php">Serviços</a>
                         <a href="/Html/Log/logout.html">Sair</a>
                     </div>
