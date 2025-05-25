@@ -3,7 +3,7 @@ session_start();
 
 // Verificar se o usuário está logado e é admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    header('Location: login.php');
+    header('Location: ../Log/login.php?error=access_denied');
     exit();
 }
 
@@ -25,29 +25,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action']) {
             case 'elevate_to_admin':
                 $user_id = (int)$_POST['user_id'];
-                // Primeiro, verificar se o usuário já tem role de admin
-                $check_admin = $pdo->prepare("
-                    SELECT ur.id FROM UserRoles ur 
-                    JOIN Roles r ON ur.role_id = r.role_id 
-                    WHERE ur.user_id = ? AND r.role_name = 'admin'
-                ");
-                $check_admin->execute([$user_id]);
-                
-                if (!$check_admin->fetch()) {
-                    // Obter role_id do admin
-                    $admin_role = $pdo->prepare("SELECT role_id FROM Roles WHERE role_name = 'admin'");
-                    $admin_role->execute();
-                    $admin_role_id = $admin_role->fetchColumn();
+
+                try {
+                    // Iniciar transação para garantir consistência
+                    $pdo->beginTransaction();
                     
-                    // Adicionar role de admin
-                    $stmt = $pdo->prepare("INSERT INTO UserRoles (user_id, role_id) VALUES (?, ?)");
-                    $stmt->execute([$user_id, $admin_role_id]);
-                    $success_msg = "Usuário promovido a administrador com sucesso!";
-                } else {
-                    $error_msg = "Usuário já é administrador!";
+                    // Primeiro, verificar se o usuário já tem role de admin
+                    $check_admin = $pdo->prepare("
+                        SELECT ur.id FROM UserRoles ur
+                        JOIN Roles r ON ur.role_id = r.role_id
+                        WHERE ur.user_id = ? AND r.role_name = 'admin'
+                    ");
+                    $check_admin->execute([$user_id]);
+                    
+                    if (!$check_admin->fetch()) {
+                        // Em vez de apagar, vamos "desativar" os perfis para preservar contratos
+                        
+                        // Desativar perfil de freelancer (adicionar campo 'active' se não existir)
+                        $deactivate_freelancer = $pdo->prepare("
+                            UPDATE FreelancerProfiles 
+                            SET active = 0, updated_at = NOW() 
+                            WHERE user_id = ?
+                        ");
+                        $deactivate_freelancer->execute([$user_id]);
+                        
+                        // Desativar perfil de restaurante
+                        $deactivate_restaurant = $pdo->prepare("
+                            UPDATE RestaurantProfiles 
+                            SET active = 0, updated_at = NOW() 
+                            WHERE user_id = ?
+                        ");
+                        $deactivate_restaurant->execute([$user_id]);
+                        
+                        // Remover apenas as roles antigas (não os perfis)
+                        $remove_old_roles = $pdo->prepare("DELETE FROM UserRoles WHERE user_id = ?");
+                        $remove_old_roles->execute([$user_id]);
+                        
+                        // Obter role_id do admin
+                        $admin_role = $pdo->prepare("SELECT role_id FROM Roles WHERE role_name = 'admin'");
+                        $admin_role->execute();
+                        $admin_role_id = $admin_role->fetchColumn();
+                        
+                        if ($admin_role_id) {
+                            // Adicionar role de admin
+                            $stmt = $pdo->prepare("INSERT INTO UserRoles (user_id, role_id) VALUES (?, ?)");
+                            $stmt->execute([$user_id, $admin_role_id]);
+                            
+                            // Confirmar transação
+                            $pdo->commit();
+                            $success_msg = "Usuário promovido a administrador com sucesso! Perfis anteriores foram desativados mas contratos foram preservados.";
+                        } else {
+                            $pdo->rollBack();
+                            $error_msg = "Erro: Role de admin não encontrada no sistema!";
+                        }
+                    } else {
+                        $pdo->rollBack();
+                        $error_msg = "Usuário já é administrador!";
+                    }
+                } catch (Exception $e) {
+                    // Reverter transação em caso de erro
+                    $pdo->rollBack();
+                    $error_msg = "Erro ao promover usuário: " . $e->getMessage();
                 }
                 break;
-                
             case 'add_category':
                 $name = trim($_POST['category_name']);
                 $description = trim($_POST['category_description']);
@@ -65,14 +105,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'delete_category':
                 $category_id = (int)$_POST['category_id'];
                 try {
-                    $stmt = $pdo->prepare("DELETE FROM ServiceCategories WHERE category_id = ?");
-                    $stmt->execute([$category_id]);
-                    $success_msg = "Categoria deletada com sucesso!";
+                    // Inicia uma transação
+                    $pdo->beginTransaction();
+
+                    // Primeiro, deleta todos os serviços associados à categoria
+                    $stmtServices = $pdo->prepare("DELETE FROM Services WHERE category_id = ?");
+                    $stmtServices->execute([$category_id]);
+
+                    // Em seguida, deleta a categoria
+                    $stmtCategory = $pdo->prepare("DELETE FROM ServiceCategories WHERE category_id = ?");
+                    $stmtCategory->execute([$category_id]);
+
+                    // Confirma a transação
+                    $pdo->commit();
+
+                    $success_msg = "Categoria e serviços associados deletados com sucesso!";
                 } catch (PDOException $e) {
-                    $error_msg = "Erro ao deletar categoria: " . $e->getMessage();
+                    // Em caso de erro, desfaz a transação
+                    $pdo->rollBack();
+                    $error_msg = "Erro ao deletar categoria e serviços: " . $e->getMessage();
                 }
-                break;
-                
             case 'send_message':
                 $recipient_id = (int)$_POST['recipient_id'];
                 $message_text = trim($_POST['message_text']);
@@ -157,22 +209,24 @@ $recent_users = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 // Últimos serviços contratados
-$recent_contracts = $pdo->query("
-    SELECT 
-        c.title,
-        c.agreed_price,
-        c.created_at,
-        u1.first_name as restaurant_name,
-        u2.first_name as freelancer_name
-    FROM Contracts c
-    JOIN RestaurantProfiles rp ON c.restaurant_id = rp.restaurant_id
-    JOIN FreelancerProfiles fp ON c.freelancer_id = fp.profile_id
-    JOIN Users u1 ON rp.user_id = u1.user_id
-    JOIN Users u2 ON fp.user_id = u2.user_id
-    ORDER BY c.created_at DESC
-    LIMIT 10
-")->fetchAll(PDO::FETCH_ASSOC);
-
+$recent_contracts_query = $pdo->prepare("
+SELECT 
+    c.contract_id,
+    c.title AS contract_title,
+    COALESCE(rp.restaurant_name, '[Restaurante Não Encontrado]') AS restaurant_name,
+    CONCAT(u_freelancer.first_name, ' ', u_freelancer.last_name) AS freelancer_name,
+    c.agreed_price,
+    c.start_date,
+    c.end_date,
+    c.status
+FROM Contracts c
+LEFT JOIN RestaurantProfiles rp ON c.restaurant_id = rp.user_id
+LEFT JOIN Users u_freelancer ON c.freelancer_id = u_freelancer.user_id
+ORDER BY c.contract_id
+LIMIT 10;
+");
+$recent_contracts_query->execute();
+$recent_contracts = $recent_contracts_query->fetchAll(PDO::FETCH_ASSOC);
 // Lista de usuários para gerenciamento
 $filter_role = $_GET['filter_role'] ?? '';
 $filter_date = $_GET['filter_date'] ?? '';

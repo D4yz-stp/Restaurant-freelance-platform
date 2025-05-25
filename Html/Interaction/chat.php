@@ -1,486 +1,1137 @@
 <?php
-// chat.php
-require_once 'config.php'; // config.php já chama session_start()
+session_start();
 
-// --- Gestão do Utilizador Atual ---
-$current_user_id = null;
+// Verificar se o usuário está logado
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
-// Prioridade para sessão
-if (isset($_SESSION['user_id'])) {
-    $current_user_id = (int)$_SESSION['user_id'];
-} 
-// Permitir ?current_user_id_test=X para facilitar testes sem login completo por enquanto
-// Numa aplicação real, esta parte seria removida após implementar o login.php
-elseif (isset($_GET['current_user_id_test'])) { 
-    $test_user_id = (int)$_GET['current_user_id_test'];
-    // Validar se este user_id de teste existe
-    $tempPdo = getDbConnection();
-    if ($tempPdo){
-        $userCheckStmt = $tempPdo->prepare("SELECT user_id FROM Users WHERE user_id = ?");
-        $userCheckStmt->execute([$test_user_id]);
-        if($userCheckStmt->fetch()){
-            $_SESSION['user_id'] = $test_user_id;
-            $current_user_id = $test_user_id;
-             // Redirecionar para remover o parâmetro de teste da URL
-            $queryString = http_build_query(array_diff_key($_GET, ['current_user_id_test' => '']));
-            header("Location: chat.php" . ($queryString ? "?" . $queryString : ""));
-            exit;
-        }
+try {
+    $pdo = new PDO("sqlite: ../../../../database/TesteOlga.db"); // Altere conforme sua configuração
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erro de conexão: " . $e->getMessage());
+}
+
+$current_user_id = $_SESSION['user_id'];
+$current_user_role = $_SESSION['user_role'];
+
+// Processar requisições AJAX
+if (isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    switch ($_POST['action']) {
+        case 'get_conversations':
+            echo json_encode(getConversations($pdo, $current_user_id, $current_user_role));
+            exit();
+            
+        case 'get_messages':
+            $conversation_id = $_POST['conversation_id'];
+            echo json_encode(getMessages($pdo, $conversation_id, $current_user_id));
+            exit();
+            
+        case 'send_message':
+            $conversation_id = $_POST['conversation_id'];
+            $message_text = $_POST['message_text'];
+            echo json_encode(sendMessage($pdo, $conversation_id, $current_user_id, $message_text));
+            exit();
+            
+        case 'create_conversation':
+            $target_user_id = $_POST['target_user_id'];
+            echo json_encode(createConversation($pdo, $current_user_id, $target_user_id, $current_user_role));
+            exit();
+            
+        case 'mark_as_read':
+            $conversation_id = $_POST['conversation_id'];
+            markMessagesAsRead($pdo, $conversation_id, $current_user_id);
+            echo json_encode(['success' => true]);
+            exit();
+            
+        case 'set_typing':
+            $conversation_id = $_POST['conversation_id'];
+            $is_typing = $_POST['is_typing'];
+            setTypingIndicator($pdo, $conversation_id, $current_user_id, $is_typing);
+            echo json_encode(['success' => true]);
+            exit();
+            
+        case 'get_typing':
+            $conversation_id = $_POST['conversation_id'];
+            echo json_encode(getTypingIndicator($pdo, $conversation_id, $current_user_id));
+            exit();
+            
+        case 'search_users':
+            $search_term = $_POST['search_term'];
+            echo json_encode(searchUsers($pdo, $search_term, $current_user_id, $current_user_role));
+            exit();
     }
 }
 
-if (!$current_user_id) {
-    // Se não houver utilizador, redirecionar para login.php (a implementar)
-    // header('Location: login.php');
-    // exit;
-    // Para este exemplo, se ainda não houver ID, fixamos um para demonstração
-    $_SESSION['user_id'] = 1; // João Silva (freelancer) por defeito para teste
-    $current_user_id = 1;
-    // Se estiver a testar com ?current_user_id_test, comente a linha acima.
-    // E descomente as linhas abaixo para forçar um login se não houver sessão.
-    // echo "Autenticação necessária. Implemente login.php e redirecione.";
-    // exit;
-}
-
-
-// (Resto das suas funções PHP como getConversationsForUser, getMessagesForConversation, etc.
-//  Lembre-se que algumas foram movidas para config.php, ajuste os 'includes' ou chamadas.)
-//  A função sendMessage original não é mais necessária aqui, pois usamos a versão AJAX.
-//  As funções getParticipantDisplayInfo, getUserDetails, getUserProfileIds estão agora em config.php
-
-$pdo = getDbConnection();
-if (!$pdo) exit; // getDbConnection já trata o erro
-
-$current_user_details = getUserDetails($pdo, $current_user_id);
-if (!$current_user_details) {
-    unset($_SESSION['user_id']); // Limpar sessão inválida
-    // header('Location: login.php'); // Idealmente redirecionar
-    die("Utilizador com ID $current_user_id não encontrado. Limpe os cookies ou faça login novamente.");
-}
-
-// ... (Lógica para $active_conversation_id, getConversationsForUser, getMessagesForConversation) ...
-// A função getMessagesForConversation ainda é útil para o carregamento inicial.
-// A função sendMessage que estava aqui foi substituída pela versão AJAX.
-
-/**
- * Obtém as conversas de um utilizador (com contagem de não lidas).
- * @param PDO $pdo
- * @param int $currentUserId
- * @return array
- */
-function getConversationsForUserWithUnreadCount(PDO $pdo, int $currentUserId): array {
-    $userProfile = getUserProfileIds($pdo, $currentUserId); // Função de config.php
-    if (!$userProfile) {
-        return [];
-    }
-
-    $conversations = [];
-    $sql = "";
-
-    if ($userProfile['type'] === 'freelancer') {
-        $sql = "SELECT c.conversation_id, c.restaurant_id, rp.user_id as other_user_id,
-                       (SELECT COUNT(*) FROM Messages m WHERE m.conversation_id = c.conversation_id AND m.sender_id != :current_user_id_for_unread AND m.is_read = 0) as unread_count
-                FROM Conversations c
-                JOIN RestaurantProfiles rp ON c.restaurant_id = rp.restaurant_id
-                WHERE c.freelancer_id = :profile_id";
-    } elseif ($userProfile['type'] === 'restaurant') {
-        $sql = "SELECT c.conversation_id, c.freelancer_id, fp.user_id as other_user_id,
-                       (SELECT COUNT(*) FROM Messages m WHERE m.conversation_id = c.conversation_id AND m.sender_id != :current_user_id_for_unread AND m.is_read = 0) as unread_count
+// Funções do sistema de mensagens
+function getConversations($pdo, $user_id, $user_role) {
+    try {
+        if ($user_role == 'restaurant') {
+            $stmt = $pdo->prepare("
+                SELECT c.conversation_id, c.created_at,
+                       u.first_name, u.last_name, u.profile_image_url,
+                       fp.profile_id as freelancer_id,
+                       (SELECT message_text FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message,
+                       (SELECT created_at FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message_time,
+                       (SELECT COUNT(*) FROM Messages WHERE conversation_id = c.conversation_id AND sender_id != ? AND is_read = 0) as unread_count
                 FROM Conversations c
                 JOIN FreelancerProfiles fp ON c.freelancer_id = fp.profile_id
-                WHERE c.restaurant_id = :profile_id";
-    }
-
-    if (empty($sql)) return [];
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':profile_id' => $userProfile['profile_id'],
-        ':current_user_id_for_unread' => $currentUserId // Para a subquery de contagem
-    ]);
-
-    while ($row = $stmt->fetch()) {
-        $otherParticipantInfo = getParticipantDisplayInfo($pdo, $row['other_user_id']); // Função de config.php
-
-        $lastMsgStmt = $pdo->prepare("SELECT message_text, sender_id, created_at 
-                                      FROM Messages 
-                                      WHERE conversation_id = :conv_id 
-                                      ORDER BY created_at DESC LIMIT 1");
-        $lastMsgStmt->execute([':conv_id' => $row['conversation_id']]);
-        $lastMessage = $lastMsgStmt->fetch();
-        $lastMessagePreview = $lastMessage ? htmlspecialchars(custom_strimwidth($lastMessage['message_text'], 0, 30, "...")) : "Nenhuma mensagem ainda.";
-        $lastMessageTimestamp = $lastMessage ? date("H:i", strtotime($lastMessage['created_at'])) : "";
-
-        $conversations[] = [
-            'conversation_id' => $row['conversation_id'],
-            'other_user_id' => $row['other_user_id'],
-            'other_user_name' => $otherParticipantInfo['name'],
-            'other_user_image' => $otherParticipantInfo['image_url'],
-            'last_message_preview' => $lastMessagePreview,
-            'last_message_timestamp' => $lastMessageTimestamp,
-            'unread_count' => $row['unread_count'] ?? 0
-        ];
-    }
-    // Ordenar por conversas com mensagens não lidas primeiro, depois pela última mensagem (se necessário)
-    // Esta parte pode ser mais complexa, por agora a ordem é da BD.
-    return $conversations;
-}
-
-function custom_strimwidth($str, $start, $width, $trimmarker = "") {
-    if (strlen($str) <= $width) {
-        return $str;
-    }
-    return substr($str, $start, $width - strlen($trimmarker)) . $trimmarker;
-}
-
-
-
-/**
- * Obtém as mensagens de uma conversa (usado para carregamento inicial).
- * @param PDO $pdo
- * @param int $conversationId
- * @param int $currentUserId
- * @return array
- */
-function getMessagesForConversation(PDO $pdo, int $conversationId, int $currentUserId): array {
-    // Marcar mensagens como lidas ao carregar a conversa
-    $stmtMarkRead = $pdo->prepare("UPDATE Messages SET is_read = 1 
-                                   WHERE conversation_id = :conversation_id 
-                                   AND sender_id != :current_user_id 
-                                   AND is_read = 0");
-    $stmtMarkRead->execute([
-        ':conversation_id' => $conversationId,
-        ':current_user_id' => $currentUserId
-    ]);
-
-    $stmt = $pdo->prepare("SELECT m.message_id, m.sender_id, m.message_text, m.created_at, m.is_read, u.first_name, u.last_name, u.profile_image_url
-                           FROM Messages m
-                           JOIN Users u ON m.sender_id = u.user_id
-                           WHERE m.conversation_id = :conversation_id
-                           ORDER BY m.created_at ASC");
-    $stmt->execute([':conversation_id' => $conversationId]);
-    return $stmt->fetchAll();
-}
-
-/**
- * Obtém detalhes do outro participante numa conversa.
- * @param PDO $pdo
- * @param int $conversationId
- * @param int $currentUserId
- * @return array|null ['user_id', 'name', 'image_url']
- */
-function getOtherParticipantDetailsInConversation(PDO $pdo, int $conversationId, int $currentUserId): ?array {
-    $stmt = $pdo->prepare("SELECT freelancer_id, restaurant_id FROM Conversations WHERE conversation_id = :conv_id");
-    $stmt->execute([':conv_id' => $conversationId]);
-    $conversation = $stmt->fetch();
-
-    if (!$conversation) return null;
-
-    $currentUserProfile = getUserProfileIds($pdo, $currentUserId);
-    if (!$currentUserProfile) return null;
-
-    $otherParticipantUserId = null;
-
-    if ($currentUserProfile['type'] === 'freelancer' && $currentUserProfile['profile_id'] == $conversation['freelancer_id']) {
-        $stmtRest = $pdo->prepare("SELECT user_id FROM RestaurantProfiles WHERE restaurant_id = :rest_id");
-        $stmtRest->execute([':rest_id' => $conversation['restaurant_id']]);
-        $otherProfile = $stmtRest->fetch();
-        if ($otherProfile) $otherParticipantUserId = $otherProfile['user_id'];
-
-    } elseif ($currentUserProfile['type'] === 'restaurant' && $currentUserProfile['profile_id'] == $conversation['restaurant_id']) {
-        $stmtFree = $pdo->prepare("SELECT user_id FROM FreelancerProfiles WHERE profile_id = :free_id");
-        $stmtFree->execute([':free_id' => $conversation['freelancer_id']]);
-        $otherProfile = $stmtFree->fetch();
-        if ($otherProfile) $otherParticipantUserId = $otherProfile['user_id'];
-    }
-
-    if ($otherParticipantUserId) {
-        return getParticipantDisplayInfo($pdo, $otherParticipantUserId) + ['user_id' => $otherParticipantUserId];
-    }
-    return null;
-}
-
-$active_conversation_id = isset($_GET['conversation_id']) ? (int)$_GET['conversation_id'] : null;
-$messages = [];
-$other_participant_chat_header = null;
-
-// Não há mais processamento de POST para envio de mensagem aqui, será AJAX.
-
-$conversations = getConversationsForUserWithUnreadCount($pdo, $current_user_id); // Atualizado para incluir contagem
-
-if ($active_conversation_id) {
-    $messages = getMessagesForConversation($pdo, $active_conversation_id, $current_user_id); // Passa $current_user_id para marcar como lidas
-    $other_participant_chat_header = getOtherParticipantDetailsInConversation($pdo, $active_conversation_id, $current_user_id);
-    if (!$other_participant_chat_header) {
-        $active_conversation_id = null;
+                JOIN Users u ON fp.user_id = u.user_id
+                WHERE c.restaurant_id = (SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?)
+                ORDER BY last_message_time DESC
+            ");
+            $stmt->execute([$user_id, $user_id]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT c.conversation_id, c.created_at,
+                       u.first_name, u.last_name, u.profile_image_url,
+                       rp.restaurant_id,
+                       rp.restaurant_name,
+                       (SELECT message_text FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message,
+                       (SELECT created_at FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message_time,
+                       (SELECT COUNT(*) FROM Messages WHERE conversation_id = c.conversation_id AND sender_id != ? AND is_read = 0) as unread_count
+                FROM Conversations c
+                JOIN RestaurantProfiles rp ON c.restaurant_id = rp.restaurant_id
+                JOIN Users u ON rp.user_id = u.user_id
+                WHERE c.freelancer_id = (SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?)
+                ORDER BY last_message_time DESC
+            ");
+            $stmt->execute([$user_id, $user_id]);
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
     }
 }
 
+function getMessages($pdo, $conversation_id, $current_user_id) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT m.*, u.first_name, u.last_name, u.profile_image_url
+            FROM Messages m
+            JOIN Users u ON m.sender_id = u.user_id
+            WHERE m.conversation_id = ?
+            ORDER BY m.created_at ASC
+        ");
+        $stmt->execute([$conversation_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function sendMessage($pdo, $conversation_id, $sender_id, $message_text) {
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO Messages (conversation_id, sender_id, message_text, is_delivered, created_at)
+            VALUES (?, ?, ?, 1, datetime('now'))
+        ");
+        $stmt->execute([$conversation_id, $sender_id, $message_text]);
+        return ['success' => true, 'message_id' => $pdo->lastInsertId()];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function createConversation($pdo, $current_user_id, $target_user_id, $current_user_role) {
+    try {
+        if ($current_user_role == 'restaurant') {
+            $restaurant_stmt = $pdo->prepare("SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?");
+            $restaurant_stmt->execute([$current_user_id]);
+            $restaurant_id = $restaurant_stmt->fetchColumn();
+            
+            $freelancer_stmt = $pdo->prepare("SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?");
+            $freelancer_stmt->execute([$target_user_id]);
+            $freelancer_id = $freelancer_stmt->fetchColumn();
+        } else {
+            $freelancer_stmt = $pdo->prepare("SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?");
+            $freelancer_stmt->execute([$current_user_id]);
+            $freelancer_id = $freelancer_stmt->fetchColumn();
+            
+            $restaurant_stmt = $pdo->prepare("SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?");
+            $restaurant_stmt->execute([$target_user_id]);
+            $restaurant_id = $restaurant_stmt->fetchColumn();
+        }
+        
+        // Verificar se a conversa já existe
+        $check_stmt = $pdo->prepare("
+            SELECT conversation_id FROM Conversations 
+            WHERE restaurant_id = ? AND freelancer_id = ?
+        ");
+        $check_stmt->execute([$restaurant_id, $freelancer_id]);
+        $existing = $check_stmt->fetchColumn();
+        
+        if ($existing) {
+            return ['success' => true, 'conversation_id' => $existing];
+        }
+        
+        // Criar nova conversa
+        $stmt = $pdo->prepare("
+            INSERT INTO Conversations (restaurant_id, freelancer_id, created_at)
+            VALUES (?, ?, datetime('now'))
+        ");
+        $stmt->execute([$restaurant_id, $freelancer_id]);
+        
+        return ['success' => true, 'conversation_id' => $pdo->lastInsertId()];
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
+
+function markMessagesAsRead($pdo, $conversation_id, $user_id) {
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE Messages 
+            SET is_read = 1, read_at = datetime('now')
+            WHERE conversation_id = ? AND sender_id != ? AND is_read = 0
+        ");
+        $stmt->execute([$conversation_id, $user_id]);
+    } catch (PDOException $e) {
+        // Log error
+    }
+}
+
+function setTypingIndicator($pdo, $conversation_id, $user_id, $is_typing) {
+    try {
+        $stmt = $pdo->prepare("
+            INSERT OR REPLACE INTO TypingIndicators (conversation_id, user_id, is_typing, last_activity)
+            VALUES (?, ?, ?, datetime('now'))
+        ");
+        $stmt->execute([$conversation_id, $user_id, $is_typing]);
+    } catch (PDOException $e) {
+        // Log error
+    }
+}
+
+function getTypingIndicator($pdo, $conversation_id, $current_user_id) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT u.first_name, ti.is_typing
+            FROM TypingIndicators ti
+            JOIN Users u ON ti.user_id = u.user_id
+            WHERE ti.conversation_id = ? AND ti.user_id != ? AND ti.is_typing = 1
+            AND ti.last_activity > datetime('now', '-5 seconds')
+        ");
+        $stmt->execute([$conversation_id, $current_user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
+    try {
+        if ($current_user_role == 'restaurant') {
+            // Restaurante procura freelancers
+            $stmt = $pdo->prepare("
+                SELECT u.user_id, u.first_name, u.last_name, u.profile_image_url,
+                       fp.profile_id, fp.hourly_rate, fp.avg_rating
+                FROM Users u
+                JOIN UserRoles ur ON u.user_id = ur.user_id
+                JOIN Roles r ON ur.role_id = r.role_id
+                JOIN FreelancerProfiles fp ON u.user_id = fp.user_id
+                WHERE r.role_name = 'freelancer'
+                AND u.user_id != ?
+                AND (u.first_name LIKE ? OR u.last_name LIKE ?)
+                LIMIT 10
+            ");
+            $search_pattern = "%{$search_term}%";
+            $stmt->execute([$current_user_id, $search_pattern, $search_pattern]);
+        } else {
+            // Freelancer procura restaurantes
+            $stmt = $pdo->prepare("
+                SELECT u.user_id, u.first_name, u.last_name, u.profile_image_url,
+                       rp.restaurant_id, rp.restaurant_name, rp.avg_rating
+                FROM Users u
+                JOIN UserRoles ur ON u.user_id = ur.user_id
+                JOIN Roles r ON ur.role_id = r.role_id
+                JOIN RestaurantProfiles rp ON u.user_id = rp.user_id
+                WHERE r.role_name = 'restaurant'
+                AND u.user_id != ?
+                AND (u.first_name LIKE ? OR u.last_name LIKE ? OR rp.restaurant_name LIKE ?)
+                LIMIT 10
+            ");
+            $search_pattern = "%{$search_term}%";
+            $stmt->execute([$current_user_id, $search_pattern, $search_pattern, $search_pattern]);
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - <?php echo htmlspecialchars($current_user_details['first_name']); ?></title>
+    <title>Mensagens - RestaurantConnect</title>
     <style>
-        /* ... (os seus estilos CSS de antes) ... */
-        /* Adicionar estilo para contador de não lidas */
-        .conversation-item .unread-count {
-            background-color: #dc3545;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 80vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #343a40;
+            color: white;
+        }
+
+        .search-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .search-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-results {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            position: absolute;
+            width: calc(100% - 40px);
+            z-index: 1000;
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .search-result-item:hover {
+            background: #f8f9fa;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .user-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: #e9ecef;
+        }
+
+        .conversation-item.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .conversation-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .last-message {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .unread-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
             color: white;
             border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 0.75em;
-            margin-left: 5px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
             font-weight: bold;
         }
-        .conversation-item .info .user-name { font-weight: bold; display: inline-block; /* Para o contador ficar ao lado */ }
 
-    
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: #343a40;
+            color: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .chat-header h3 {
+            font-size: 1.3rem;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message.received {
+            margin-right: auto;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-content {
+            background: #007bff;
+            color: white;
+        }
+
+        .message.received .message-content {
+            background: white;
+            border: 1px solid #e9ecef;
+        }
+
+        .message-info {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .message.sent .message-info {
+            text-align: right;
+        }
+
+        .typing-indicator {
+            padding: 10px 20px;
+            font-style: italic;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .message-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .message-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+            resize: none;
+            min-height: 50px;
+            max-height: 100px;
+        }
+
+        .message-input:focus {
+            border-color: #007bff;
+        }
+
+        .send-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .send-button:hover {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .container {
+                height: 90vh;
+                margin: 10px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                display: none;
+            }
+            
+            .sidebar.show {
+                display: flex;
+            }
+            
+            .chat-area {
+                width: 100%;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
     </style>
-    <link rel="stylesheet" href="../../Css/MESA2.css">
-    <link rel="stylesheet" href="../../Css/global.css">
-    
 </head>
 <body>
-    <div class="chat-app">
-        <aside class="sidebar">
+    <div class="container">
+        <div class="sidebar">
             <div class="sidebar-header">
-                <div class="current-user-info">
-                     <img src="<?php echo !empty($current_user_details['profile_image_url']) ? htmlspecialchars($current_user_details['profile_image_url']) : DEFAULT_AVATAR_URL; ?>" 
-                          alt="<?php echo htmlspecialchars($current_user_details['first_name']); ?>" 
-                          width="40" height="40">
-                     <span><?php echo htmlspecialchars($current_user_details['first_name'] . ' ' . $current_user_details['last_name']); ?></span>
+                <h2>Mensagens</h2>
+                <div class="user-info">
+                    <?php echo $_SESSION['user_first_name'] . ' ' . $_SESSION['user_last_name']; ?>
+                    <span>(<?php echo ucfirst($_SESSION['user_role']); ?>)</span>
                 </div>
-                <h2>Conversas</h2>
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Procurar utilizadores..." class="search-input">
+                    <button id="searchButton" class="search-button">🔍</button>
+                </div>
             </div>
-            <ul class="conversations-list" id="conversations-list-ul">
-                <?php if (empty($conversations)): ?>
-                    <li><p style="padding: 15px; text-align:center; color: #777;">Nenhuma conversa encontrada.</p></li>
-                <?php endif; ?>
-                <?php foreach ($conversations as $convo): ?>
-                    <a href="chat.php?conversation_id=<?php echo $convo['conversation_id']; ?>" 
-                       class="conversation-item <?php echo ($active_conversation_id == $convo['conversation_id']) ? 'active' : ''; ?>"
-                       data-conversation-id="<?php echo $convo['conversation_id']; ?>">
-                        <img src="<?php echo $convo['other_user_image']; ?>" alt="<?php echo htmlspecialchars($convo['other_user_name']); ?>">
-                        <div class="info">
-                            <span class="user-name"><?php echo htmlspecialchars($convo['other_user_name']); ?></span>
-                            <?php if ($convo['unread_count'] > 0): ?>
-                                <span class="unread-count" id="unread-count-<?php echo $convo['conversation_id']; ?>"><?php echo $convo['unread_count']; ?></span>
-                            <?php else: ?>
-                                 <span class="unread-count" id="unread-count-<?php echo $convo['conversation_id']; ?>" style="display:none;">0</span>
-                            <?php endif; ?>
-                            <span class="last-message-preview"><?php echo $convo['last_message_preview']; ?></span>
-                        </div>
-                        <span class="timestamp"><?php echo $convo['last_message_timestamp']; ?></span>
-                    </a>
-                <?php endforeach; ?>
-            </ul>
-        </aside>
-
-        <main class="chat-area">
-            <?php if ($active_conversation_id && $other_participant_chat_header): ?>
-                <header class="chat-header">
-                    <img src="<?php echo $other_participant_chat_header['image_url']; ?>" alt="<?php echo htmlspecialchars($other_participant_chat_header['name']); ?>" width="40" height="40">
-                    <h3><?php echo htmlspecialchars($other_participant_chat_header['name']); ?></h3>
-                </header>
-
-                <section class="message-list" id="message-list-section">
-                    <?php if (empty($messages)): ?>
-                         <p class="message-placeholder">Ainda não há mensagens nesta conversa. Envie uma mensagem para começar!</p>
-                    <?php endif; ?>
-                    <?php foreach ($messages as $msg): ?>
-                        <div class="message-bubble <?php echo ($msg['sender_id'] == $current_user_id) ? 'sent' : 'received'; ?>" data-message-id="<?php echo $msg['message_id']; ?>">
-                            <p class="message-content"><?php echo nl2br(htmlspecialchars($msg['message_text'])); ?></p>
-                            <span class="message-timestamp"><?php echo date("H:i", strtotime($msg['created_at'])); ?></span>
-                            <?php if ($msg['sender_id'] == $current_user_id && $msg['is_read']): ?>
-                                <span class="read-receipt" title="Lida">&#10003;&#10003;</span> <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </section>
-
-                <footer class="message-form">
-                    <form id="ajax-message-form" style="display: flex; width: 100%;">
-                        <input type="hidden" name="conversation_id_form" value="<?php echo $active_conversation_id; ?>">
-                        <textarea name="message_text" placeholder="Digite sua mensagem..." rows="1" required></textarea>
-                        <button type="submit">Enviar</button>
-                    </form>
-                </footer>
-
-            <?php else: ?>
-                <div class="message-list">
-                    <p class="message-placeholder">Selecione uma conversa para começar a conversar.</p>
+            <div class="conversations-list" id="conversationsList">
+                <div class="loading">
+                    <div class="spinner"></div>
                 </div>
-            <?php endif; ?>
-        </main>
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-header" id="chatHeader">
+                <h3>Selecione uma conversa</h3>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="empty-state">
+                    Selecione uma conversa para começar a trocar mensagens
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            </div>
+            
+            <div class="message-input-area" id="messageInputArea" style="display: none;">
+                <div class="message-input-container">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Digite sua mensagem..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" type="button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const currentUserId = <?php echo $current_user_id; ?>;
-        const activeConversationId = <?php echo $active_conversation_id ? $active_conversation_id : 'null'; ?>;
-        let pollingInterval;
-        let lastKnownMessageId = 0;
-
-        const messageListSection = document.getElementById('message-list-section');
-        const messageForm = document.getElementById('ajax-message-form');
-        const messageInput = messageForm ? messageForm.querySelector('textarea[name="message_text"]') : null;
-
-        function scrollToBottom() {
-            if (messageListSection) {
-                messageListSection.scrollTop = messageListSection.scrollHeight;
+        class MessagingSystem {
+            constructor() {
+                this.currentConversationId = null;
+                this.messagePollingInterval = null;
+                this.conversationPollingInterval = null;
+                this.typingTimeout = null;
+                this.isTyping = false;
+                this.searchTimeout = null;
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.loadConversations();
+                this.startPolling();
             }
-        }
-
-        function appendMessageToUI(msg, isSenderCurrentUser) {
-            if (!messageListSection) return;
-
-            // Remover placeholder se existir
-            const placeholder = messageListSection.querySelector('.message-placeholder');
-            if (placeholder) placeholder.remove();
-
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message-bubble');
-            messageDiv.classList.add(isSenderCurrentUser ? 'sent' : 'received');
-            messageDiv.dataset.messageId = msg.message_id;
-
-            const contentP = document.createElement('p');
-            contentP.classList.add('message-content');
-            contentP.innerHTML = msg.message_text.replace(/\n/g, '<br>'); // nl2br
-            messageDiv.appendChild(contentP);
-
-            const timestampSpan = document.createElement('span');
-            timestampSpan.classList.add('message-timestamp');
-            timestampSpan.textContent = msg.created_at_formatted || new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            messageDiv.appendChild(timestampSpan);
-
-            // Adicionar recibo de leitura para mensagens enviadas (simplificado)
-            if (isSenderCurrentUser && msg.is_read) {
-                const readReceiptSpan = document.createElement('span');
-                readReceiptSpan.classList.add('read-receipt');
-                readReceiptSpan.title = 'Lida';
-                readReceiptSpan.innerHTML = '✓✓'; // Duplo check
-                messageDiv.appendChild(readReceiptSpan);
+            
+            initializeElements() {
+                this.conversationsList = document.getElementById('conversationsList');
+                this.chatHeader = document.getElementById('chatHeader');
+                this.messagesContainer = document.getElementById('messagesContainer');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.messageInputArea = document.getElementById('messageInputArea');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.searchInput = document.getElementById('searchInput');
+                this.searchButton = document.getElementById('searchButton');
             }
-
-
-            messageListSection.appendChild(messageDiv);
-            scrollToBottom();
-            if (msg.message_id > lastKnownMessageId) {
-                lastKnownMessageId = msg.message_id;
+            
+            bindEvents() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // Indicador de digitação
+                this.messageInput.addEventListener('input', () => {
+                    this.handleTyping();
+                });
+                
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 100) + 'px';
+                });
+                
+                // Eventos de pesquisa
+                this.searchButton.addEventListener('click', () => this.performSearch());
+                this.searchInput.addEventListener('input', () => {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => this.performSearch(), 500);
+                });
+                this.searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.performSearch();
+                    }
+                });
             }
-        }
-
-        // Atualizar contadores de não lidas na lista de conversas
-        function updateUnreadCountOnSidebar(conversationId, count) {
-            const unreadBadge = document.getElementById(`unread-count-${conversationId}`);
-            const conversationItem = document.querySelector(`.conversation-item[data-conversation-id="${conversationId}"]`);
-            if (unreadBadge && conversationItem) {
-                if (count > 0) {
-                    unreadBadge.textContent = count;
-                    unreadBadge.style.display = 'inline-block';
-                    conversationItem.classList.add('has-unread'); // Adicionar classe para possível estilização
-                } else {
-                    unreadBadge.textContent = '0';
-                    unreadBadge.style.display = 'none';
-                    conversationItem.classList.remove('has-unread');
-                }
-                // Atualizar preview da última mensagem também seria bom aqui
-            }
-        }
-
-
-        async function fetchNewMessages() {
-            if (!activeConversationId) return;
-
-            try {
-                const response = await fetch(`get_new_messages_ajax.php?conversation_id=<span class="math-inline">\{activeConversationId\}&last\_message\_id\=</span>{lastKnownMessageId}`);
-                if (!response.ok) {
-                    console.error("Erro na rede ao buscar mensagens:", response.statusText);
-                    return;
-                }
-                const data = await response.json();
-
-                if (data.success && data.messages && data.messages.length > 0) {
-                    data.messages.forEach(msg => {
-                        appendMessageToUI(msg, msg.sender_id === currentUserId);
-                    });
-                    // Se esta é a conversa ativa, o contador de não lidas dela deve ser zerado na sidebar
-                    updateUnreadCountOnSidebar(activeConversationId, 0);
-                } else if (!data.success) {
-                    console.error("Erro ao buscar mensagens:", data.error);
-                }
-            } catch (error) {
-                console.error("Erro de JavaScript ao buscar mensagens:", error);
-            }
-        }
-
-        if (messageForm) {
-            messageForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                const messageText = messageInput.value.trim();
-                const conversationIdHidden = this.querySelector('input[name="conversation_id_form"]').value;
-
-                if (!messageText || !conversationIdHidden) return;
-
-                const formData = new FormData();
-                formData.append('conversation_id', conversationIdHidden);
-                formData.append('message_text', messageText);
-
+            
+            async loadConversations() {
                 try {
-                    const response = await fetch('send_message_ajax.php', {
+                    const formData = new FormData();
+                    formData.append('action', 'get_conversations');
+                    
+                    const response = await fetch('', {
                         method: 'POST',
                         body: formData
                     });
-                    if (!response.ok) {
-                         console.error("Erro na rede ao enviar mensagem:", response.statusText);
-                         alert("Erro ao enviar mensagem. Tente novamente.");
-                         return;
-                    }
-                    const data = await response.json();
-
-                    if (data.success && data.message) {
-                        appendMessageToUI(data.message, true); // true porque o utilizador atual enviou
-                        messageInput.value = '';
-                        messageInput.style.height = 'auto'; // Reset textarea height
-                        // A mensagem enviada já terá o lastKnownMessageId atualizado
-                    } else {
-                        alert("Erro ao enviar mensagem: " + (data.error || "Erro desconhecido"));
+                    
+                    const conversations = await response.json();
+                    this.renderConversations(conversations);
+                } catch (error) {
+                    console.error('Erro ao carregar conversas:', error);
+                }
+            }
+            
+            renderConversations(conversations) {
+                if (!Array.isArray(conversations) || conversations.length === 0) {
+                    this.conversationsList.innerHTML = '<div class="empty-state">Nenhuma conversa encontrada</div>';
+                    return;
+                }
+                
+                const html = conversations.map(conv => `
+                    <div class="conversation-item" data-conversation-id="${conv.conversation_id}" onclick="messaging.selectConversation(${conv.conversation_id}, '${conv.first_name} ${conv.last_name}${conv.restaurant_name ? ' - ' + conv.restaurant_name : ''}')">
+                        <div class="conversation-header">
+                            <div class="conversation-name">
+                                ${conv.first_name} ${conv.last_name}
+                                ${conv.restaurant_name ? '<br><small>' + conv.restaurant_name + '</small>' : ''}
+                            </div>
+                            <div class="conversation-time">
+                                ${conv.last_message_time ? this.formatTime(conv.last_message_time) : ''}
+                            </div>
+                        </div>
+                        <div class="last-message">
+                            ${conv.last_message || 'Nenhuma mensagem ainda'}
+                        </div>
+                        ${conv.unread_count > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ''}
+                    </div>
+                `).join('');
+                
+                this.conversationsList.innerHTML = html;
+            }
+            
+            async selectConversation(conversationId, contactName) {
+                // Remover classe active de todas as conversas
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Adicionar classe active à conversa selecionada
+                document.querySelector(`[data-conversation-id="${conversationId}"]`).classList.add('active');
+                
+                this.currentConversationId = conversationId;
+                this.chatHeader.innerHTML = `<h3>${contactName}</h3>`;
+                this.messageInputArea.style.display = 'block';
+                
+                await this.loadMessages();
+                await this.markAsRead();
+            }
+            
+            async loadMessages() {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'get_messages');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const messages = await response.json();
+                    this.renderMessages(messages);
+                } catch (error) {
+                    console.error('Erro ao carregar mensagens:', error);
+                }
+            }
+            
+            renderMessages(messages) {
+                if (!Array.isArray(messages)) {
+                    this.messagesContainer.innerHTML = '<div class="empty-state">Erro ao carregar mensagens</div>';
+                    return;
+                }
+                
+                const currentUserId = <?php echo $_SESSION['user_id']; ?>;
+                
+                const html = messages.map(msg => {
+                    const isSent = msg.sender_id == currentUserId;
+                    return `
+                        <div class="message ${isSent ? 'sent' : 'received'}">
+                            <div class="message-content">
+                                ${this.escapeHtml(msg.message_text)}
+                            </div>
+                            <div class="message-info">
+                                ${isSent ? 'Você' : msg.first_name} • ${this.formatTime(msg.created_at)}
+                                ${msg.is_read && isSent ? ' • Lida' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                this.messagesContainer.innerHTML = html;
+                this.scrollToBottom();
+            }
+            
+            async sendMessage() {
+                const messageText = this.messageInput.value.trim();
+                if (!messageText || !this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'send_message');
+                    formData.append('conversation_id', this.currentConversationId);
+                    formData.append('message_text', messageText);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.messageInput.value = '';
+                        this.messageInput.style.height = 'auto';
+                        await this.loadMessages();
+                        await this.loadConversations(); // Atualizar lista de conversas
+                        
+                        // Parar indicador de digitação
+                        this.setTypingIndicator(false);
                     }
                 } catch (error) {
-                    console.error("Erro de JavaScript ao enviar mensagem:", error);
-                    alert("Erro ao enviar mensagem. Verifique sua conexão.");
+                    console.error('Erro ao enviar mensagem:', error);
                 }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            scrollToBottom(); // Scroll inicial
-
-            // Determinar o lastKnownMessageId das mensagens já carregadas
-            const existingMessages = messageListSection ? messageListSection.querySelectorAll('.message-bubble') : [];
-            if (existingMessages.length > 0) {
-                lastKnownMessageId = parseInt(existingMessages[existingMessages.length - 1].dataset.messageId) || 0;
             }
-
-            if (activeConversationId) {
-                pollingInterval = setInterval(fetchNewMessages, 5000); // Polling a cada 5 segundos
+            
+            async markAsRead() {
+                if (!this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'mark_as_read');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } catch (error) {
+                    console.error('Erro ao marcar como lida:', error);
+                }
             }
-
-            // Auto-ajuste da altura do textarea
-            if(messageInput) {
-                messageInput.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = (this.scrollHeight) + 'px';
+            
+            handleTyping() {
+                if (!this.currentConversationId) return;
+                
+                if (!this.isTyping) {
+                    this.isTyping = true;
+                    this.setTypingIndicator(true);
+                }
+                
+                clearTimeout(this.typingTimeout);
+                this.typingTimeout = setTimeout(() => {
+                    this.isTyping = false;
+                    this.setTypingIndicator(false);
+                }, 2000);
+            }
+            
+            async setTypingIndicator(isTyping) {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'set_typing');
+                    formData.append('conversation_id', this.currentConversationId);
+                    formData.append('is_typing', isTyping ? 1 : 0);
+                    
+                    await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } catch (error) {
+                    console.error('Erro ao definir indicador de digitação:', error);
+                }
+            }
+            
+            async checkTypingIndicator() {
+                if (!this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'get_typing');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const typingUsers = await response.json();
+                    
+                    if (Array.isArray(typingUsers) && typingUsers.length > 0) {
+                        const names = typingUsers.map(user => user.first_name).join(', ');
+                        this.typingIndicator.textContent = `${names} está digitando...`;
+                        this.typingIndicator.style.display = 'block';
+                    } else {
+                        this.typingIndicator.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar indicador de digitação:', error);
+                }
+            }
+            
+            async performSearch() {
+                const searchTerm = this.searchInput.value.trim();
+                if (searchTerm.length < 2) {
+                    this.hideSearchResults();
+                    return;
+                }
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'search_users');
+                    formData.append('search_term', searchTerm);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const users = await response.json();
+                    this.showSearchResults(users);
+                } catch (error) {
+                    console.error('Erro ao pesquisar utilizadores:', error);
+                }
+            }
+            
+            showSearchResults(users) {
+                // Remover resultados anteriores
+                this.hideSearchResults();
+                
+                if (!Array.isArray(users) || users.length === 0) {
+                    return;
+                }
+                
+                const searchResults = document.createElement('div');
+                searchResults.className = 'search-results';
+                searchResults.id = 'searchResults';
+                
+                const html = users.map(user => `
+                    <div class="search-result-item" onclick="messaging.startConversationWithUser(${user.user_id}, '${user.first_name} ${user.last_name}${user.restaurant_name ? ' - ' + user.restaurant_name : ''}')">
+                        <div style="font-weight: 600;">
+                            ${user.first_name} ${user.last_name}
+                            ${user.restaurant_name ? '<br><small>' + user.restaurant_name + '</small>' : ''}
+                        </div>
+                        ${user.avg_rating ? `<small>⭐ ${user.avg_rating}/5</small>` : ''}
+                    </div>
+                `).join('');
+                
+                searchResults.innerHTML = html;
+                this.searchInput.parentNode.appendChild(searchResults);
+            }
+            
+            hideSearchResults() {
+                const existing = document.getElementById('searchResults');
+                if (existing) {
+                    existing.remove();
+                }
+            }
+            
+            async startConversationWithUser(userId, userName) {
+                this.hideSearchResults();
+                this.searchInput.value = '';
+                
+                try {
+                    const conversationId = await createNewConversation(userId);
+                    if (conversationId) {
+                        await this.loadConversations();
+                        await this.selectConversation(conversationId, userName);
+                    }
+                } catch (error) {
+                    console.error('Erro ao iniciar conversa:', error);
+                }
+            }
+            
+            startPolling() {
+                // Polling para novas mensagens
+                this.messagePollingInterval = setInterval(() => {
+                    if (this.currentConversationId) {
+                        this.loadMessages();
+                        this.checkTypingIndicator();
+                    }
+                }, 2000);
+                
+                // Polling para novas conversas
+                this.conversationPollingInterval = setInterval(() => {
+                    this.loadConversations();
+                }, 5000);
+            }
+            
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                
+                if (diffInMinutes < 1) return 'Agora';
+                if (diffInMinutes < 60) return `${diffInMinutes}min`;
+                if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+                
+                return date.toLocaleDateString('pt-PT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
             }
-        });
-
-        // Limpar intervalo se a página for descarregada (ou mudar de conversa, mais complexo)
-        window.addEventListener('beforeunload', () => {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
+            
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
             }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            stopPolling() {
+                if (this.messagePollingInterval) {
+                    clearInterval(this.messagePollingInterval);
+                }
+                if (this.conversationPollingInterval) {
+                    clearInterval(this.conversationPollingInterval);
+                }
+            }
+        }
+        
+        // Inicializar sistema de mensagens
+        let messaging;
+        document.addEventListener('DOMContentLoaded', () => {
+            messaging = new MessagingSystem();
+        });
+        
+        // Limpar intervalos quando sair da página
+        window.addEventListener('beforeunload', () => {
+            if (messaging) {
+                messaging.stopPolling();
+            }
+        });
+        
+        // Função global para selecionar conversa (chamada pelos elementos HTML)
+        function selectConversation(conversationId, contactName) {
+            messaging.selectConversation(conversationId, contactName);
+        }
+        
+        // Função para criar nova conversa (se necessário)
+        async function createNewConversation(targetUserId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create_conversation');
+                formData.append('target_user_id', targetUserId);
+                
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messaging.loadConversations();
+                    return result.conversation_id;
+                }
+            } catch (error) {
+                console.error('Erro ao criar conversa:', error);
+            }
+            return null;
+        }
+        
+        // Notificação de som para novas mensagens (opcional)
+        function playNotificationSound() {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUSBjqT2fPJeSsFJnvN8tuNOggSYrjq2JZKCgxOqOT0t2AeBDySz+GhXR0LYKjl7aJWFApBmeP1xGYYBzJ+GAAA');
+            audio.volume = 0.3;
+            audio.play();
+        }
+        
+        // Sistema de notificações do navegador (opcional)
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        
+        function showNotification(title, message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: message,
+                    icon: '/favicon.ico'
+                });
+            }
+        }
+        
+        // Solicitar permissão para notificações quando página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            requestNotificationPermission();
         });
     </script>
 </body>

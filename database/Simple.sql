@@ -175,10 +175,14 @@ CREATE TABLE Messages (
     sender_id INTEGER NOT NULL,
     message_text TEXT NOT NULL,
     is_read INTEGER DEFAULT 0,
+    is_delivered INTEGER DEFAULT 0,
+    read_at TIMESTAMP,
+    delivered_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES Conversations(conversation_id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
 
 -- Especializações dos chefs
 CREATE TABLE ChefSpecializations (
@@ -192,6 +196,15 @@ CREATE TABLE ChefSpecializations (
     FOREIGN KEY (freelancer_id) REFERENCES FreelancerProfiles(profile_id) ON DELETE CASCADE
 );
 
+CREATE TABLE TypingIndicators (
+    indicator_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    is_typing INTEGER DEFAULT 0,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES Conversations(conversation_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
 -- Especialização em Limpeza
 CREATE TABLE CleaningSpecializations (
     cleaning_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +268,7 @@ ALTER TABLE Conversations ADD COLUMN job_id INTEGER REFERENCES Services(service_
 
 -- Inserir dados na tabela Users
 INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
-('João', 'Silva', 'joao.silva@example.com', 'hashed_password_1', '11987654321', 'Brasil', 'São Paulo'),
+('João', 'Silva', 'joao.silva@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11987654321', 'Brasil', 'São Paulo'),
 ('Maria', 'Souza', 'maria.souza@example.com', 'hashed_password_2', '21987654321', 'Brasil', 'Rio de Janeiro'),
 ('Carlos', 'Oliveira', 'carlos.oliveira@example.com', 'hashed_password_3', '31987654321', 'Brasil', 'Belo Horizonte'),
 ('Ana', 'Pereira', 'ana.pereira@example.com', 'hashed_password_4', '41987654321', 'Brasil', 'Curitiba'),
@@ -282,7 +295,7 @@ INSERT INTO UserRoles (user_id, role_id) VALUES
 (2, 2), -- Maria Souza é restaurante
 (3, 1), -- Carlos Oliveira é freelancer
 (4, 2), -- Ana Pereira é restaurante
-(5, 3), -- Pedro Almeida é admin
+(5, 1), -- Pedro Almeida é admin
 (6, 3); -- Admin Master é admin  -- ASSOCIAÇÃO DO NOVO ADMIN AQUI
 
 -- Inserir dados na tabela FreelancerProfiles
@@ -346,11 +359,18 @@ INSERT INTO Conversations (restaurant_id, freelancer_id) VALUES
 (2, 3);
 
 -- Inserir dados na tabela Messages
-INSERT INTO Messages (conversation_id, sender_id, message_text) VALUES
-(1, 1, 'Olá, gostaria de contratar seus serviços.'),
-(1, 2, 'Olá, ficarei feliz em ajudar. Quando será o evento?'),
-(2, 3, 'Bom dia, preciso de um serviço de limpeza.'),
-(2, 4, 'Bom dia, qual o horário desejado?');
+INSERT INTO Messages (conversation_id, sender_id, message_text, is_read, is_delivered, read_at, delivered_at) VALUES
+(1, 1, 'Olá, gostaria de contratar seus serviços.', 1, 1, '2023-10-16 10:00:00', '2023-10-16 09:55:00'),
+(1, 2, 'Olá, ficarei feliz em ajudar. Quando será o evento?', 1, 1, '2023-10-16 10:05:00', '2023-10-16 10:02:00'),
+(2, 3, 'Bom dia, preciso de um serviço de limpeza.', 1, 1, '2023-10-17 08:30:00', '2023-10-17 08:25:00'),
+(2, 4, 'Bom dia, qual o horário desejado?', 1, 1, '2023-10-17 08:35:00', '2023-10-17 08:32:00');
+
+
+INSERT INTO TypingIndicators (conversation_id, user_id, is_typing, last_activity) VALUES
+(1, 1, 0, '2023-10-16 09:50:00'),
+(1, 2, 0, '2023-10-16 10:00:00'),
+(2, 3, 0, '2023-10-17 08:20:00'),
+(2, 4, 0, '2023-10-17 08:30:00');
 
 -- Inserir dados na tabela ChefSpecializations
 INSERT INTO ChefSpecializations (freelancer_id, cuisine_type, certifications, dietary_specialties, menu_planning, catering_experience) VALUES
