@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
 
                 case 'update_chef_specialization':
-                    // Eliminar especialização antiga
+                   // Eliminar especialização antiga
                     $stmt = $pdo->prepare("DELETE FROM ChefSpecializations WHERE freelancer_id = ?");
                     $stmt->execute([$freelancer_id]);
                     
@@ -181,6 +181,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         isset($_POST['catering_experience']) ? 1 : 0
                     ]);
                     $success_message = "Especialização de chef atualizada com sucesso!";
+                    
+                    // Atualizar campo de especialização do usuário
+                    $stmt = $pdo->prepare("UPDATE Users SET specialization = 'chef' WHERE user_id = ?");
+                    $stmt->execute([$user_id]);
                     break;
                 case 'update_cleaning_specialization':
                     // Eliminar especialização antiga
@@ -197,6 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         isset($_POST['eco_friendly']) ? 1 : 0
                     ]);
                     $success_message = "Especialização de limpeza atualizada com sucesso!";
+                    
+                    // Atualizar campo de especialização do usuário
+                    $stmt = $pdo->prepare("UPDATE Users SET specialization = 'cleaning' WHERE user_id = ?");
+                    $stmt->execute([$user_id]);
                     break;
 
                 case 'update_bartender_specialization':
@@ -215,23 +223,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_POST['certifications'] ?? ''
                     ]);
                     $success_message = "Especialização de bartender atualizada com sucesso!";
+                    
+                    // Atualizar campo de especialização do usuário
+                    $stmt = $pdo->prepare("UPDATE Users SET specialization = 'bartender' WHERE user_id = ?");
+                    $stmt->execute([$user_id]);
                     break;
                     
                 case 'update_service_staff_specialization':
-                    // Eliminar especialização antiga
-                    $stmt = $pdo->prepare("DELETE FROM ServiceStaffSpecializations WHERE freelancer_id = ?");
-                    $stmt->execute([$freelancer_id]);
+                    // Debug detalhado
+                    error_log("=== DEBUG SERVICE STAFF ===");
+                    error_log("POST data: " . print_r($_POST, true));
+                    error_log("Freelancer ID: " . $freelancer_id);
                     
-                    // Inserir nova especialização
-                    $stmt = $pdo->prepare("INSERT INTO ServiceStaffSpecializations (freelancer_id, fine_dining_experience, event_service, sommelier_knowledge, customer_service_rating) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([
-                        $freelancer_id,
-                        isset($_POST['fine_dining_experience']) ? 1 : 0,
-                        isset($_POST['event_service']) ? 1 : 0,
-                        isset($_POST['sommelier_knowledge']) ? 1 : 0,
-                        !empty($_POST['customer_service_rating']) ? (int)$_POST['customer_service_rating'] : null
-                    ]);
-                    $success_message = "Especialização de atendimento atualizada com sucesso!";
+                    try {
+                        // Eliminar especialização antiga
+                        $stmt = $pdo->prepare("DELETE FROM ServiceStaffSpecializations WHERE freelancer_id = ?");
+                        $delete_result = $stmt->execute([$freelancer_id]);
+                        error_log("Delete result: " . ($delete_result ? 'SUCCESS' : 'FAILED'));
+                        error_log("Rows affected by delete: " . $stmt->rowCount());
+                        
+                        // Preparar valores para inserção
+                        $fine_dining = isset($_POST['fine_dining_experience']) ? 1 : 0;
+                        $event_service = isset($_POST['event_service']) ? 1 : 0;
+                        $sommelier = isset($_POST['sommelier_knowledge']) ? 1 : 0;
+                        $rating = !empty($_POST['customer_service_rating']) ? (int)$_POST['customer_service_rating'] : null;
+                        
+                        error_log("Values to insert:");
+                        error_log("- freelancer_id: " . $freelancer_id);
+                        error_log("- fine_dining_experience: " . $fine_dining);
+                        error_log("- event_service: " . $event_service);
+                        error_log("- sommelier_knowledge: " . $sommelier);
+                        error_log("- customer_service_rating: " . ($rating === null ? 'NULL' : $rating));
+                        
+                        // Inserir nova especialização
+                        $stmt = $pdo->prepare("INSERT INTO ServiceStaffSpecializations (freelancer_id, fine_dining_experience, event_service, sommelier_knowledge, customer_service_rating) VALUES (?, ?, ?, ?, ?)");
+                        $insert_result = $stmt->execute([
+                            $freelancer_id,
+                            $fine_dining,
+                            $event_service,
+                            $sommelier,
+                            $rating
+                        ]);
+                        
+                        error_log("Insert result: " . ($insert_result ? 'SUCCESS' : 'FAILED'));
+                        error_log("Last insert ID: " . $pdo->lastInsertId());
+                        
+                        if ($insert_result) {
+                            $success_message = "Especialização de atendimento atualizada com sucesso!";
+                            
+                            // Atualizar campo de especialização do usuário
+                            $stmt = $pdo->prepare("UPDATE Users SET specialization = 'service_staff' WHERE user_id = ?");
+                            $stmt->execute([$user_id]);
+                        } else {
+                            $error_message = "Erro ao inserir especialização de atendimento.";
+                        }
+                        
+                    } catch (Exception $e) {
+                        error_log("Exception in service staff update: " . $e->getMessage());
+                        $error_message = "Erro: " . $e->getMessage();
+                    }
                     break;
             }
         }
@@ -710,7 +760,7 @@ try {
         <div class="section">
             <h3>Navegação</h3>
             <p>
-                <a href="dashboard.php" class="btn">Voltar ao Dashboard</a>
+                <a href="../Services/main_service/index.php" class="btn">Voltar ao Dashboard</a>
                 <a href="logout.php" class="btn btn-danger">Sair</a>
             </p>
         </div>

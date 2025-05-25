@@ -401,6 +401,8 @@ INSERT INTO FreelancerLanguages (freelancer_id, language_id, proficiency) VALUES
 (3, 1, 'Nativo'),
 (3, 3, 'Intermediário');
 
+ALTER TABLE Users ADD COLUMN specialization TEXT;
+
 -- Atualizar URLs de imagens e contagem de reviews
 UPDATE Users SET profile_image_url = 'https://example.com/joao.jpg' WHERE user_id = 1;
 UPDATE Users SET profile_image_url = 'https://example.com/maria.jpg' WHERE user_id = 2;
