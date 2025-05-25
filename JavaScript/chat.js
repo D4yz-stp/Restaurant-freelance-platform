@@ -314,25 +314,25 @@ class MessagingSystem {
     showSearchResults(users) {
         // Remover resultados anteriores
         this.hideSearchResults();
-        
+
         if (!Array.isArray(users) || users.length === 0) {
             return;
         }
-        
+
         const searchResults = document.createElement('div');
         searchResults.className = 'search-results';
         searchResults.id = 'searchResults';
-        
+
         const html = users.map(user => `
-            <div class="search-result-item" onclick="messaging.startConversationWithUser(${user.user_id}, '${user.first_name} ${user.last_name}${user.restaurant_name ? ' - ' + user.restaurant_name : ''}')">
-                <div style="font-weight: 600;">
+            <div class="search-result-item" onclick="messaging.startConversationWithUser(${user.user_id}, '${user.first_name} ${user.last_name}${user.restaurant_name ? ' - ' + user.restaurant_name : ''}')" style="color: black;">
+                <div style="font-weight: 600; color: black;">
                     ${user.first_name} ${user.last_name}
                     ${user.restaurant_name ? '<br><small>' + user.restaurant_name + '</small>' : ''}
                 </div>
-                ${user.avg_rating ? `<small>⭐ ${user.avg_rating}/5</small>` : ''}
+                ${user.avg_rating ? `<small style="color: black;">⭐ ${user.avg_rating}/5</small>` : ''}
             </div>
         `).join('');
-        
+
         searchResults.innerHTML = html;
         this.searchInput.parentNode.appendChild(searchResults);
     }
