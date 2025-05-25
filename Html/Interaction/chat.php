@@ -1,9 +1,11 @@
 <?php
 session_start();
 
+$conversation_id = isset($_GET['conversation_id']) ? intval($_GET['conversation_id']) : null;
+
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ../Log/login.php');
     exit();
 }
 
@@ -271,348 +273,7 @@ function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensagens - RestaurantConnect</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            height: 80vh;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 350px;
-            background: #f8f9fa;
-            border-right: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            background: #343a40;
-            color: white;
-        }
-
-        .search-container {
-            margin-top: 15px;
-            display: flex;
-            gap: 5px;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 20px;
-            outline: none;
-            font-size: 0.9rem;
-        }
-
-        .search-button {
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .search-results {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            margin-top: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            position: absolute;
-            width: calc(100% - 40px);
-            z-index: 1000;
-        }
-
-        .search-result-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #f8f9fa;
-        }
-
-        .search-result-item:hover {
-            background: #f8f9fa;
-        }
-
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-
-        .sidebar-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-
-        .user-info {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .conversations-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .conversation-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid #e9ecef;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            position: relative;
-        }
-
-        .conversation-item:hover {
-            background: #e9ecef;
-        }
-
-        .conversation-item.active {
-            background: #007bff;
-            color: white;
-        }
-
-        .conversation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .conversation-name {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .conversation-time {
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
-
-        .last-message {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .unread-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-header {
-            padding: 20px;
-            background: #343a40;
-            color: white;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .chat-header h3 {
-            font-size: 1.3rem;
-        }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            max-width: 70%;
-        }
-
-        .message.sent {
-            margin-left: auto;
-        }
-
-        .message.received {
-            margin-right: auto;
-        }
-
-        .message-content {
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
-        }
-
-        .message.sent .message-content {
-            background: #007bff;
-            color: white;
-        }
-
-        .message.received .message-content {
-            background: white;
-            border: 1px solid #e9ecef;
-        }
-
-        .message-info {
-            font-size: 0.8rem;
-            margin-top: 5px;
-            opacity: 0.7;
-        }
-
-        .message.sent .message-info {
-            text-align: right;
-        }
-
-        .typing-indicator {
-            padding: 10px 20px;
-            font-style: italic;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .message-input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .message-input-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #e9ecef;
-            border-radius: 25px;
-            outline: none;
-            font-size: 1rem;
-            resize: none;
-            min-height: 50px;
-            max-height: 100px;
-        }
-
-        .message-input:focus {
-            border-color: #007bff;
-        }
-
-        .send-button {
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-        }
-
-        .send-button:hover {
-            background: #0056b3;
-        }
-
-        .send-button:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-
-        .empty-state {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #6c757d;
-            font-size: 1.1rem;
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007bff;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsivo */
-        @media (max-width: 768px) {
-            .container {
-                height: 90vh;
-                margin: 10px;
-            }
-            
-            .sidebar {
-                width: 100%;
-                display: none;
-            }
-            
-            .sidebar.show {
-                display: flex;
-            }
-            
-            .chat-area {
-                width: 100%;
-            }
-            
-            .message {
-                max-width: 85%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../../../../css/chat.css">
 </head>
 <body>
     <div class="container">
@@ -676,11 +337,19 @@ function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
                 this.typingTimeout = null;
                 this.isTyping = false;
                 this.searchTimeout = null;
-                
+
                 this.initializeElements();
                 this.bindEvents();
                 this.loadConversations();
                 this.startPolling();
+
+                // Verificar se há um conversation_id na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const conversationId = urlParams.get('conversation_id');
+                if (conversationId) {
+                    // Carregar a conversa automaticamente
+                    this.selectConversation(conversationId, 'Conversa Carregada');
+                }
             }
             
             initializeElements() {
@@ -777,18 +446,21 @@ function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
                 document.querySelectorAll('.conversation-item').forEach(item => {
                     item.classList.remove('active');
                 });
-                
+
                 // Adicionar classe active à conversa selecionada
-                document.querySelector(`[data-conversation-id="${conversationId}"]`).classList.add('active');
-                
+                const conversationElement = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (conversationElement) {
+                    conversationElement.classList.add('active');
+                }
+
                 this.currentConversationId = conversationId;
                 this.chatHeader.innerHTML = `<h3>${contactName}</h3>`;
                 this.messageInputArea.style.display = 'block';
-                
+
                 await this.loadMessages();
                 await this.markAsRead();
             }
-            
+
             async loadMessages() {
                 try {
                     const formData = new FormData();
@@ -1026,6 +698,7 @@ function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
                     this.loadConversations();
                 }, 5000);
             }
+            
             
             formatTime(timestamp) {
                 const date = new Date(timestamp);

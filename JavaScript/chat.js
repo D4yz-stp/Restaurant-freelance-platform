@@ -1,322 +1,479 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Variáveis globais
-    const messagesContainer = document.getElementById('messages-container');
-    const sendMessageForm = document.getElementById('sendMessageForm');
-    const messageInput = document.getElementById('messageInput');
-    const notificationElement = document.getElementById('notification');
-    let isTyping = false;
-    let typingTimer;
-    let lastMessageId = 0;
-    let currentConversationId = <?php echo isset($active_conversation) ? $active_conversation['conversation_id'] : 'null'; ?>;
-    let userTypingStatus = {};
+<?php
+        class MessagingSystem {
+            constructor() {
+                this.currentConversationId = null;
+                this.messagePollingInterval = null;
+                this.conversationPollingInterval = null;
+                this.typingTimeout = null;
+                this.isTyping = false;
+                this.searchTimeout = null;
 
-    // Se tiver uma conversa ativa, inicializar o último ID de mensagem
-    if (messagesContainer) {
-        const messages = messagesContainer.querySelectorAll('.message');
-        if (messages.length > 0) {
-            const lastMessage = messages[messages.length - 1];
-            if (lastMessage.dataset.messageId) {
-                lastMessageId = parseInt(lastMessage.dataset.messageId);
-            }
-        }
+                this.initializeElements();
+                this.bindEvents();
+                this.loadConversations();
+                this.startPolling();
 
-        // Rolar para a última mensagem
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    // Função para enviar mensagem por AJAX
-    if (sendMessageForm) {
-        sendMessageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const message = messageInput.value.trim();
-            if (message === '') return;
-
-            const formData = new FormData(sendMessageForm);
-
-            fetch('send_message.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Limpar campo de mensagem
-                    messageInput.value = '';
-
-                    // Buscar novas mensagens (incluirá a mensagem enviada)
-                    fetchNewMessages();
-
-                    // Atualizar lista de conversas
-                    setTimeout(updateConversationsList, 500);
+                // Verificar se há um conversation_id na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const conversationId = urlParams.get('conversation_id');
+                if (conversationId) {
+                    // Carregar a conversa automaticamente
+                    this.selectConversation(conversationId, 'Conversa Carregada');
                 }
-            })
-            .catch(error => console.error('Erro ao enviar mensagem:', error));
-        });
-    }
+            }
+            
+            initializeElements() {
+                this.conversationsList = document.getElementById('conversationsList');
+                this.chatHeader = document.getElementById('chatHeader');
+                this.messagesContainer = document.getElementById('messagesContainer');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.messageInputArea = document.getElementById('messageInputArea');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.searchInput = document.getElementById('searchInput');
+                this.searchButton = document.getElementById('searchButton');
+            }
+            
+            bindEvents() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // Indicador de digitação
+                this.messageInput.addEventListener('input', () => {
+                    this.handleTyping();
+                });
+                
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 100) + 'px';
+                });
+                
+                // Eventos de pesquisa
+                this.searchButton.addEventListener('click', () => this.performSearch());
+                this.searchInput.addEventListener('input', () => {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => this.performSearch(), 500);
+                });
+                this.searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.performSearch();
+                    }
+                });
+            }
+            
+            async loadConversations() {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'get_conversations');
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const conversations = await response.json();
+                    this.renderConversations(conversations);
+                } catch (error) {
+                    console.error('Erro ao carregar conversas:', error);
+                }
+            }
+            
+            renderConversations(conversations) {
+                if (!Array.isArray(conversations) || conversations.length === 0) {
+                    this.conversationsList.innerHTML = '<div class="empty-state">Nenhuma conversa encontrada</div>';
+                    return;
+                }
+                
+                const html = conversations.map(conv => `
+                    <div class="conversation-item" data-conversation-id="${conv.conversation_id}" onclick="messaging.selectConversation(${conv.conversation_id}, '${conv.first_name} ${conv.last_name}${conv.restaurant_name ? ' - ' + conv.restaurant_name : ''}')">
+                        <div class="conversation-header">
+                            <div class="conversation-name">
+                                ${conv.first_name} ${conv.last_name}
+                                ${conv.restaurant_name ? '<br><small>' + conv.restaurant_name + '</small>' : ''}
+                            </div>
+                            <div class="conversation-time">
+                                ${conv.last_message_time ? this.formatTime(conv.last_message_time) : ''}
+                            </div>
+                        </div>
+                        <div class="last-message">
+                            ${conv.last_message || 'Nenhuma mensagem ainda'}
+                        </div>
+                        ${conv.unread_count > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ''}
+                    </div>
+                `).join('');
+                
+                this.conversationsList.innerHTML = html;
+            }
+            
+            async selectConversation(conversationId, contactName) {
+                // Remover classe active de todas as conversas
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
 
-    // Eventos de digitação
-    if (messageInput) {
-        messageInput.addEventListener('input', function() {
-            if (!isTyping) {
-                isTyping = true;
-                sendTypingStatus(true);
+                // Adicionar classe active à conversa selecionada
+                const conversationElement = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (conversationElement) {
+                    conversationElement.classList.add('active');
+                }
+
+                this.currentConversationId = conversationId;
+                this.chatHeader.innerHTML = `<h3>${contactName}</h3>`;
+                this.messageInputArea.style.display = 'block';
+
+                await this.loadMessages();
+                await this.markAsRead();
             }
 
-            // Reset do timer
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(function() {
-                isTyping = false;
-                sendTypingStatus(false);
-            }, 2000);
-        });
-    }
-
-    // Função para enviar status de digitação
-    function sendTypingStatus(isTyping) {
-        if (!currentConversationId) return;
-
-        fetch('typing_status.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `conversation_id=${currentConversationId}&is_typing=${isTyping ? 1 : 0}`
-        });
-    }
-
-    // Verificar por novas mensagens a cada 3 segundos
-    if (currentConversationId) {
-        setInterval(fetchNewMessages, 3000);
-    }
-
-    // Atualizar lista de conversas a cada 5 segundos
-    setInterval(updateConversationsList, 5000);
-
-    // Verificar status de digitação a cada 2 segundos
-    if (currentConversationId) {
-        setInterval(checkTypingStatus, 2000);
-    }
-
-    // Função para buscar novas mensagens
-    function fetchNewMessages() {
-        if (!currentConversationId) return;
-
-        fetch(`get_new_messages.php?conversation_id=${currentConversationId}&last_message_id=${lastMessageId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.messages && data.messages.length > 0) {
-                let newMessagesHtml = '';
-                let currentDate = null;
-                let hasNewMessages = false;
-
-                data.messages.forEach(msg => {
-                    // Atualizar o último ID de mensagem
-                    if (parseInt(msg.message_id) > lastMessageId) {
-                        lastMessageId = parseInt(msg.message_id);
-                        hasNewMessages = true;
-                    }
-
-                    // Verificar se é um novo dia
-                    const messageDate = new Date(msg.created_at).toISOString().split('T')[0];
-                    if (currentDate !== messageDate) {
-                        const today = new Date().toISOString().split('T')[0];
-                        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-                        let dateDisplay;
-                        if (messageDate === today) {
-                            dateDisplay = 'Hoje';
-                        } else if (messageDate === yesterday) {
-                            dateDisplay = 'Ontem';
-                        } else {
-                            const dateParts = messageDate.split('-');
-                            dateDisplay = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                        }
-
-                        newMessagesHtml += `
-                            <div class="date-separator">
-                                <span>${dateDisplay}</span>
-                            </div>
-                        `;
-                        currentDate = messageDate;
-                    }
-
-                    // Criar HTML da mensagem
-                    const isOwnMessage = msg.sender_id == <?php echo $user_id; ?>;
-                    const messageTime = new Date(msg.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-
-                    let avatarHtml = '';
-                    if (!isOwnMessage) {
-                        const defaultAvatar = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><circle cx='15' cy='15' r='15' fill='%23ccc'/><text x='50%' y='50%' text-anchor='middle' dy='.3em' font-size='15' fill='%23fff'>${msg.first_name.charAt(0)}</text></svg>`);
-                        const avatar = msg.profile_image_url ? msg.profile_image_url : `data:image/svg+xml,${defaultAvatar}`;
-
-                        avatarHtml = `
-                            <div class="message-avatar">
-                                <img src="${avatar}" alt="${msg.first_name}">
-                            </div>
-                        `;
-                    }
-
-                    newMessagesHtml += `
-                        <div class="message ${isOwnMessage ? 'sent' : 'received'}" data-message-id="${msg.message_id}">
-                            ${avatarHtml}
+            async loadMessages() {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'get_messages');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const messages = await response.json();
+                    this.renderMessages(messages);
+                } catch (error) {
+                    console.error('Erro ao carregar mensagens:', error);
+                }
+            }
+            
+            renderMessages(messages) {
+                if (!Array.isArray(messages)) {
+                    this.messagesContainer.innerHTML = '<div class="empty-state">Erro ao carregar mensagens</div>';
+                    return;
+                }
+                
+                const currentUserId = <?php echo $_SESSION['user_id']; ?>;
+                
+                const html = messages.map(msg => {
+                    const isSent = msg.sender_id == currentUserId;
+                    return `
+                        <div class="message ${isSent ? 'sent' : 'received'}">
                             <div class="message-content">
-                                <div class="message-text">${msg.message_text.replace(/\n/g, '<br>')}</div>
-                                <div class="message-time">
-                                    ${messageTime}
-                                    ${isOwnMessage ? `<span class="message-status">${msg.is_read == 1 ? '✓✓' : '✓'}</span>` : ''}
-                                </div>
+                                ${this.escapeHtml(msg.message_text)}
+                            </div>
+                            <div class="message-info">
+                                ${isSent ? 'Você' : msg.first_name} • ${this.formatTime(msg.created_at)}
+                                ${msg.is_read && isSent ? ' • Lida' : ''}
                             </div>
                         </div>
                     `;
-                });
-
-                if (hasNewMessages) {
-                    // Adicionar novas mensagens
-                    messagesContainer.insertAdjacentHTML('beforeend', newMessagesHtml);
-
-                    // Rolar para a última mensagem
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-                    // Notificar se a mensagem não é do usuário atual
-                    const lastMessage = data.messages[data.messages.length - 1];
-                    if (lastMessage.sender_id != <?php echo $user_id; ?>) {
-                        showNotification(`Nova mensagem de ${lastMessage.first_name}`);
+                }).join('');
+                
+                this.messagesContainer.innerHTML = html;
+                this.scrollToBottom();
+            }
+            
+            async sendMessage() {
+                const messageText = this.messageInput.value.trim();
+                if (!messageText || !this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'send_message');
+                    formData.append('conversation_id', this.currentConversationId);
+                    formData.append('message_text', messageText);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.messageInput.value = '';
+                        this.messageInput.style.height = 'auto';
+                        await this.loadMessages();
+                        await this.loadConversations(); // Atualizar lista de conversas
+                        
+                        // Parar indicador de digitação
+                        this.setTypingIndicator(false);
                     }
+                } catch (error) {
+                    console.error('Erro ao enviar mensagem:', error);
                 }
             }
-        })
-        .catch(error => console.error('Erro ao buscar novas mensagens:', error));
-    }
-
-    // Função para atualizar lista de conversas
-    function updateConversationsList() {
-        fetch('get_conversations.php')
-        .then(response => response.json())
-        .then(data => {
-            if (data.conversations) {
-                const conversationsList = document.getElementById('conversations');
-
-                // Verificar se há novas conversas ou atualizações
-                const currentConversations = conversationsList.querySelectorAll('.conversation');
-                const conversationIds = Array.from(currentConversations).map(el => {
-                    const link = el.querySelector('a');
-                    return parseInt(new URLSearchParams(link.href.split('?')[1]).get('conversation_id'));
-                });
-
-                let hasUpdates = data.conversations.length !== currentConversations.length;
-
-                if (!hasUpdates) {
-                    // Verificar se alguma conversa foi alterada (nova mensagem, etc)
-                    data.conversations.forEach(conv => {
-                        if (!conversationIds.includes(conv.conversation_id)) {
-                            hasUpdates = true;
-                        }
+            
+            async markAsRead() {
+                if (!this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'mark_as_read');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    await fetch('', {
+                        method: 'POST',
+                        body: formData
                     });
+                } catch (error) {
+                    console.error('Erro ao marcar como lida:', error);
                 }
-
-                if (hasUpdates) {
-                    // Recriar a lista de conversas
-                    let newConversationsHtml = '';
-
-                    if (data.conversations.length === 0) {
-                        newConversationsHtml = '<li class="no-conversations">Nenhuma conversa encontrada.</li>';
+            }
+            
+            handleTyping() {
+                if (!this.currentConversationId) return;
+                
+                if (!this.isTyping) {
+                    this.isTyping = true;
+                    this.setTypingIndicator(true);
+                }
+                
+                clearTimeout(this.typingTimeout);
+                this.typingTimeout = setTimeout(() => {
+                    this.isTyping = false;
+                    this.setTypingIndicator(false);
+                }, 2000);
+            }
+            
+            async setTypingIndicator(isTyping) {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'set_typing');
+                    formData.append('conversation_id', this.currentConversationId);
+                    formData.append('is_typing', isTyping ? 1 : 0);
+                    
+                    await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } catch (error) {
+                    console.error('Erro ao definir indicador de digitação:', error);
+                }
+            }
+            
+            async checkTypingIndicator() {
+                if (!this.currentConversationId) return;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'get_typing');
+                    formData.append('conversation_id', this.currentConversationId);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const typingUsers = await response.json();
+                    
+                    if (Array.isArray(typingUsers) && typingUsers.length > 0) {
+                        const names = typingUsers.map(user => user.first_name).join(', ');
+                        this.typingIndicator.textContent = `${names} está digitando...`;
+                        this.typingIndicator.style.display = 'block';
                     } else {
-                        data.conversations.forEach(conv => {
-                            const isActive = currentConversationId && currentConversationId == conv.conversation_id;
-                            const defaultAvatar = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><circle cx='20' cy='20' r='20' fill='%23ccc'/><text x='50%' y='50%' text-anchor='middle' dy='.3em' font-size='20' fill='%23fff'>${conv.name.charAt(0)}</text></svg>`);
-                            const avatar = conv.profile_image_url ? conv.profile_image_url : `data:image/svg+xml,${defaultAvatar}`;
-
-                            newConversationsHtml += `
-                                <li class="conversation ${isActive ? 'active' : ''}">
-                                    <a href="chat.php?conversation_id=${conv.conversation_id}">
-                                        <div class="conversation-avatar">
-                                            <img src="${avatar}" alt="${conv.name}">
-                                            ${conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count}</span>` : ''}
-                                        </div>
-                                        <div class="conversation-info">
-                                            <div class="conversation-name">${conv.name}</div>
-                                            <div class="conversation-last-message">${conv.last_message ? (conv.last_message.length > 30 ? conv.last_message.substring(0, 30) + '...' : conv.last_message) : ''}</div>
-                                            <div class="conversation-time">
-                                                ${formatMessageTime(conv.last_message_time)}
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                            `;
-                        });
+                        this.typingIndicator.style.display = 'none';
                     }
-
-                    conversationsList.innerHTML = newConversationsHtml;
-
-                    // Adicionar eventos de clique nas novas conversas
-                    document.querySelectorAll('#conversations .conversation a').forEach(link => {
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            window.location.href = this.href;
-                        });
+                } catch (error) {
+                    console.error('Erro ao verificar indicador de digitação:', error);
+                }
+            }
+            
+            async performSearch() {
+                const searchTerm = this.searchInput.value.trim();
+                if (searchTerm.length < 2) {
+                    this.hideSearchResults();
+                    return;
+                }
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'search_users');
+                    formData.append('search_term', searchTerm);
+                    
+                    const response = await fetch('', {
+                        method: 'POST',
+                        body: formData
                     });
+                    
+                    const users = await response.json();
+                    this.showSearchResults(users);
+                } catch (error) {
+                    console.error('Erro ao pesquisar utilizadores:', error);
                 }
             }
-        })
-        .catch(error => console.error('Erro ao atualizar conversas:', error));
-    }
-
-    // Função para verificar status de digitação
-    function checkTypingStatus() {
-        if (!currentConversationId) return;
-
-        fetch(`get_typing_status.php?conversation_id=${currentConversationId}`)
-        .then(response => response.json())
-        .then(data => {
-            const chatHeader = document.getElementById('chat-header');
-            const typingIndicator = chatHeader.querySelector('.typing-indicator');
-
-            if (data.is_typing) {
-                // Mostrar indicador de digitação
-                if (!typingIndicator) {
-                    const indicator = document.createElement('div');
-                    indicator.className = 'typing-indicator';
-                    indicator.textContent = 'digitando...';
-                    chatHeader.appendChild(indicator);
+            
+            showSearchResults(users) {
+                // Remover resultados anteriores
+                this.hideSearchResults();
+                
+                if (!Array.isArray(users) || users.length === 0) {
+                    return;
                 }
-            } else {
-                // Remover indicador de digitação
-                if (typingIndicator) {
-                    typingIndicator.remove();
+                
+                const searchResults = document.createElement('div');
+                searchResults.className = 'search-results';
+                searchResults.id = 'searchResults';
+                
+                const html = users.map(user => `
+                    <div class="search-result-item" onclick="messaging.startConversationWithUser(${user.user_id}, '${user.first_name} ${user.last_name}${user.restaurant_name ? ' - ' + user.restaurant_name : ''}')">
+                        <div style="font-weight: 600;">
+                            ${user.first_name} ${user.last_name}
+                            ${user.restaurant_name ? '<br><small>' + user.restaurant_name + '</small>' : ''}
+                        </div>
+                        ${user.avg_rating ? `<small>⭐ ${user.avg_rating}/5</small>` : ''}
+                    </div>
+                `).join('');
+                
+                searchResults.innerHTML = html;
+                this.searchInput.parentNode.appendChild(searchResults);
+            }
+            
+            hideSearchResults() {
+                const existing = document.getElementById('searchResults');
+                if (existing) {
+                    existing.remove();
                 }
             }
-        })
-        .catch(error => console.error('Erro ao verificar status de digitação:', error));
-    }
-
-    // Função para formatar hora da mensagem
-    function formatMessageTime(timestamp) {
-        if (!timestamp) return '';
-
-        const messageDate = new Date(timestamp);
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const timeStr = messageDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-
-        if (messageDate.toDateString() === today.toDateString()) {
-            return timeStr;
-        } else if (messageDate.toDateString() === yesterday.toDateString()) {
-            return 'Ontem';
-        } else {
-            return messageDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+            
+            async startConversationWithUser(userId, userName) {
+                this.hideSearchResults();
+                this.searchInput.value = '';
+                
+                try {
+                    const conversationId = await createNewConversation(userId);
+                    if (conversationId) {
+                        await this.loadConversations();
+                        await this.selectConversation(conversationId, userName);
+                    }
+                } catch (error) {
+                    console.error('Erro ao iniciar conversa:', error);
+                }
+            }
+            
+            startPolling() {
+                // Polling para novas mensagens
+                this.messagePollingInterval = setInterval(() => {
+                    if (this.currentConversationId) {
+                        this.loadMessages();
+                        this.checkTypingIndicator();
+                    }
+                }, 2000);
+                
+                // Polling para novas conversas
+                this.conversationPollingInterval = setInterval(() => {
+                    this.loadConversations();
+                }, 5000);
+            }
+            
+            
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                
+                if (diffInMinutes < 1) return 'Agora';
+                if (diffInMinutes < 60) return `${diffInMinutes}min`;
+                if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+                
+                return date.toLocaleDateString('pt-PT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            stopPolling() {
+                if (this.messagePollingInterval) {
+                    clearInterval(this.messagePollingInterval);
+                }
+                if (this.conversationPollingInterval) {
+                    clearInterval(this.conversationPollingInterval);
+                }
+            }
         }
-    }
-
-    // Função para mostrar notificação
-    function showNotification(message) {
-        notificationElement.textContent = message;
-        notificationElement.style.display = 'block';
-
-        setTimeout(() => {
-            notificationElement.style.display = 'none';
-        }, 5000);
-    }
-});
+        
+        // Inicializar sistema de mensagens
+        let messaging;
+        document.addEventListener('DOMContentLoaded', () => {
+            messaging = new MessagingSystem();
+        });
+        
+        // Limpar intervalos quando sair da página
+        window.addEventListener('beforeunload', () => {
+            if (messaging) {
+                messaging.stopPolling();
+            }
+        });
+        
+        // Função global para selecionar conversa (chamada pelos elementos HTML)
+        function selectConversation(conversationId, contactName) {
+            messaging.selectConversation(conversationId, contactName);
+        }
+        
+        // Função para criar nova conversa (se necessário)
+        async function createNewConversation(targetUserId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create_conversation');
+                formData.append('target_user_id', targetUserId);
+                
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messaging.loadConversations();
+                    return result.conversation_id;
+                }
+            } catch (error) {
+                console.error('Erro ao criar conversa:', error);
+            }
+            return null;
+        }
+        
+        // Notificação de som para novas mensagens (opcional)
+        function playNotificationSound() {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUSBjqT2fPJeSsFJnvN8tuNOggSYrjq2JZKCgxOqOT0t2AeBDySz+GhXR0LYKjl7aJWFApBmeP1xGYYBzJ+GAAA');
+            audio.volume = 0.3;
+            audio.play();
+        }
+        
+        // Sistema de notificações do navegador (opcional)
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        
+        function showNotification(title, message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: message,
+                    icon: '/favicon.ico'
+                });
+            }
+        }
+        
+        // Solicitar permissão para notificações quando página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            requestNotificationPermission();
+        });
+?></script>
