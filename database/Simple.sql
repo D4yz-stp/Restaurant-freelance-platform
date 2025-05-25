@@ -259,7 +259,16 @@ INSERT INTO Users (first_name, last_name, email, password_hash, contact, country
 ('Maria', 'Souza', 'maria.souza@example.com', 'hashed_password_2', '21987654321', 'Brasil', 'Rio de Janeiro'),
 ('Carlos', 'Oliveira', 'carlos.oliveira@example.com', 'hashed_password_3', '31987654321', 'Brasil', 'Belo Horizonte'),
 ('Ana', 'Pereira', 'ana.pereira@example.com', 'hashed_password_4', '41987654321', 'Brasil', 'Curitiba'),
-('Pedro', 'Almeida', 'pedro.almeida@example.com', 'hashed_password_5', '51987654321', 'Brasil', 'Porto Alegre');
+('Pedro', 'Almeida', 'pedro.almeida@example.com', 'hashed_password_5', '51987654321', 'Brasil', 'Porto Alegre'),
+(
+    'Admin', 
+    'Sistema', 
+    'admin.sistema@example.com', 
+    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',  -- ISSO É UM HASH (da senha "password")
+    '11999999999', 
+    'Brasil', 
+    'São Paulo'
+);
 
 -- Inserir dados na tabela Roles
 INSERT INTO Roles (role_name) VALUES
@@ -273,7 +282,8 @@ INSERT INTO UserRoles (user_id, role_id) VALUES
 (2, 2), -- Maria Souza é restaurante
 (3, 1), -- Carlos Oliveira é freelancer
 (4, 2), -- Ana Pereira é restaurante
-(5, 3); -- Pedro Almeida é admin
+(5, 3), -- Pedro Almeida é admin
+(6, 3); -- Admin Master é admin  -- ASSOCIAÇÃO DO NOVO ADMIN AQUI
 
 -- Inserir dados na tabela FreelancerProfiles
 INSERT INTO FreelancerProfiles (user_id, hourly_rate, availability, experience_years, avg_rating) VALUES
@@ -377,6 +387,7 @@ UPDATE Users SET profile_image_url = 'https://example.com/maria.jpg' WHERE user_
 UPDATE Users SET profile_image_url = 'https://example.com/carlos.jpg' WHERE user_id = 3;
 UPDATE Users SET profile_image_url = 'https://example.com/ana.jpg' WHERE user_id = 4;
 UPDATE Users SET profile_image_url = 'https://example.com/pedro.jpg' WHERE user_id = 5;
+UPDATE Users SET profile_image_url = 'https://example.com/admin.jpg' WHERE user_id = 6;
 
 UPDATE Services SET service_image_url = 'https://example.com/chef.jpg' WHERE service_id = 1;
 UPDATE Services SET service_image_url = 'https://example.com/garcom.jpg' WHERE service_id = 2;

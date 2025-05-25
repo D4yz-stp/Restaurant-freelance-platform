@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Adicionar informação de debug - dados do formulário
     $debug_info[] = "Email recebido: " . $email;
-    $debug_info[] = "Senha recebida: " . (empty($password) ? "Vazia" : "Preenchida");
+    $debug_info[] = "Senha recebida: " . (empty($password) ? "Vazia" : "$password");
     
     // Validar os campos
     $errors = [];
@@ -72,7 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $debug_info[] = "Usuário encontrado: " . $user['first_name'] . " " . $user['last_name'];
                     $debug_info[] = "Papel do usuário: " . $user['role_name'];
+
                     
+                    $debug_info[] = "Senha : " . $user['password_hash'];
                     // Verificar a senha
                     if (password_verify($password, $user['password_hash'])) {
                         $debug_info[] = "Senha verificada com sucesso!";
