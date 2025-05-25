@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+// Incluir as classes necessárias
+require_once '../Services/components/database.php';
+require_once 'components/MessagesRepository.php';
+
 $conversation_id = isset($_GET['conversation_id']) ? intval($_GET['conversation_id']) : null;
 
 // Verificar se o usuário está logado
@@ -9,12 +13,9 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-try {
-    $pdo = new PDO("sqlite: ../../../../database/TesteOlga.db"); // Altere conforme sua configuração
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Erro de conexão: " . $e->getMessage());
-}
+// Inicializar conexão com banco
+$db = Database::getInstance();
+$messagesRepo = new MessagesRepository($db);
 
 $current_user_id = $_SESSION['user_id'];
 $current_user_role = $_SESSION['user_role'];
@@ -25,244 +26,47 @@ if (isset($_POST['action'])) {
     
     switch ($_POST['action']) {
         case 'get_conversations':
-            echo json_encode(getConversations($pdo, $current_user_id, $current_user_role));
+            echo json_encode($messagesRepo->getConversations($current_user_id, $current_user_role));
             exit();
             
         case 'get_messages':
             $conversation_id = $_POST['conversation_id'];
-            echo json_encode(getMessages($pdo, $conversation_id, $current_user_id));
+            echo json_encode($messagesRepo->getMessages($conversation_id));
             exit();
             
         case 'send_message':
             $conversation_id = $_POST['conversation_id'];
             $message_text = $_POST['message_text'];
-            echo json_encode(sendMessage($pdo, $conversation_id, $current_user_id, $message_text));
+            echo json_encode($messagesRepo->sendMessage($conversation_id, $current_user_id, $message_text));
             exit();
             
         case 'create_conversation':
             $target_user_id = $_POST['target_user_id'];
-            echo json_encode(createConversation($pdo, $current_user_id, $target_user_id, $current_user_role));
+            echo json_encode($messagesRepo->createConversation($current_user_id, $target_user_id, $current_user_role));
             exit();
             
         case 'mark_as_read':
             $conversation_id = $_POST['conversation_id'];
-            markMessagesAsRead($pdo, $conversation_id, $current_user_id);
-            echo json_encode(['success' => true]);
+            $result = $messagesRepo->markMessagesAsRead($conversation_id, $current_user_id);
+            echo json_encode(['success' => $result]);
             exit();
             
         case 'set_typing':
             $conversation_id = $_POST['conversation_id'];
             $is_typing = $_POST['is_typing'];
-            setTypingIndicator($pdo, $conversation_id, $current_user_id, $is_typing);
-            echo json_encode(['success' => true]);
+            $result = $messagesRepo->setTypingIndicator($conversation_id, $current_user_id, $is_typing);
+            echo json_encode(['success' => $result]);
             exit();
             
         case 'get_typing':
             $conversation_id = $_POST['conversation_id'];
-            echo json_encode(getTypingIndicator($pdo, $conversation_id, $current_user_id));
+            echo json_encode($messagesRepo->getTypingIndicator($conversation_id, $current_user_id));
             exit();
             
         case 'search_users':
             $search_term = $_POST['search_term'];
-            echo json_encode(searchUsers($pdo, $search_term, $current_user_id, $current_user_role));
+            echo json_encode($messagesRepo->searchUsers($search_term, $current_user_id, $current_user_role));
             exit();
-    }
-}
-
-// Funções do sistema de mensagens
-function getConversations($pdo, $user_id, $user_role) {
-    try {
-        if ($user_role == 'restaurant') {
-            $stmt = $pdo->prepare("
-                SELECT c.conversation_id, c.created_at,
-                       u.first_name, u.last_name, u.profile_image_url,
-                       fp.profile_id as freelancer_id,
-                       (SELECT message_text FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message,
-                       (SELECT created_at FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message_time,
-                       (SELECT COUNT(*) FROM Messages WHERE conversation_id = c.conversation_id AND sender_id != ? AND is_read = 0) as unread_count
-                FROM Conversations c
-                JOIN FreelancerProfiles fp ON c.freelancer_id = fp.profile_id
-                JOIN Users u ON fp.user_id = u.user_id
-                WHERE c.restaurant_id = (SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?)
-                ORDER BY last_message_time DESC
-            ");
-            $stmt->execute([$user_id, $user_id]);
-        } else {
-            $stmt = $pdo->prepare("
-                SELECT c.conversation_id, c.created_at,
-                       u.first_name, u.last_name, u.profile_image_url,
-                       rp.restaurant_id,
-                       rp.restaurant_name,
-                       (SELECT message_text FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message,
-                       (SELECT created_at FROM Messages WHERE conversation_id = c.conversation_id ORDER BY created_at DESC LIMIT 1) as last_message_time,
-                       (SELECT COUNT(*) FROM Messages WHERE conversation_id = c.conversation_id AND sender_id != ? AND is_read = 0) as unread_count
-                FROM Conversations c
-                JOIN RestaurantProfiles rp ON c.restaurant_id = rp.restaurant_id
-                JOIN Users u ON rp.user_id = u.user_id
-                WHERE c.freelancer_id = (SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?)
-                ORDER BY last_message_time DESC
-            ");
-            $stmt->execute([$user_id, $user_id]);
-        }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
-    }
-}
-
-function getMessages($pdo, $conversation_id, $current_user_id) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT m.*, u.first_name, u.last_name, u.profile_image_url
-            FROM Messages m
-            JOIN Users u ON m.sender_id = u.user_id
-            WHERE m.conversation_id = ?
-            ORDER BY m.created_at ASC
-        ");
-        $stmt->execute([$conversation_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
-    }
-}
-
-function sendMessage($pdo, $conversation_id, $sender_id, $message_text) {
-    try {
-        $stmt = $pdo->prepare("
-            INSERT INTO Messages (conversation_id, sender_id, message_text, is_delivered, created_at)
-            VALUES (?, ?, ?, 1, datetime('now'))
-        ");
-        $stmt->execute([$conversation_id, $sender_id, $message_text]);
-        return ['success' => true, 'message_id' => $pdo->lastInsertId()];
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
-    }
-}
-
-function createConversation($pdo, $current_user_id, $target_user_id, $current_user_role) {
-    try {
-        if ($current_user_role == 'restaurant') {
-            $restaurant_stmt = $pdo->prepare("SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?");
-            $restaurant_stmt->execute([$current_user_id]);
-            $restaurant_id = $restaurant_stmt->fetchColumn();
-            
-            $freelancer_stmt = $pdo->prepare("SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?");
-            $freelancer_stmt->execute([$target_user_id]);
-            $freelancer_id = $freelancer_stmt->fetchColumn();
-        } else {
-            $freelancer_stmt = $pdo->prepare("SELECT profile_id FROM FreelancerProfiles WHERE user_id = ?");
-            $freelancer_stmt->execute([$current_user_id]);
-            $freelancer_id = $freelancer_stmt->fetchColumn();
-            
-            $restaurant_stmt = $pdo->prepare("SELECT restaurant_id FROM RestaurantProfiles WHERE user_id = ?");
-            $restaurant_stmt->execute([$target_user_id]);
-            $restaurant_id = $restaurant_stmt->fetchColumn();
-        }
-        
-        // Verificar se a conversa já existe
-        $check_stmt = $pdo->prepare("
-            SELECT conversation_id FROM Conversations 
-            WHERE restaurant_id = ? AND freelancer_id = ?
-        ");
-        $check_stmt->execute([$restaurant_id, $freelancer_id]);
-        $existing = $check_stmt->fetchColumn();
-        
-        if ($existing) {
-            return ['success' => true, 'conversation_id' => $existing];
-        }
-        
-        // Criar nova conversa
-        $stmt = $pdo->prepare("
-            INSERT INTO Conversations (restaurant_id, freelancer_id, created_at)
-            VALUES (?, ?, datetime('now'))
-        ");
-        $stmt->execute([$restaurant_id, $freelancer_id]);
-        
-        return ['success' => true, 'conversation_id' => $pdo->lastInsertId()];
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
-    }
-}
-
-function markMessagesAsRead($pdo, $conversation_id, $user_id) {
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE Messages 
-            SET is_read = 1, read_at = datetime('now')
-            WHERE conversation_id = ? AND sender_id != ? AND is_read = 0
-        ");
-        $stmt->execute([$conversation_id, $user_id]);
-    } catch (PDOException $e) {
-        // Log error
-    }
-}
-
-function setTypingIndicator($pdo, $conversation_id, $user_id, $is_typing) {
-    try {
-        $stmt = $pdo->prepare("
-            INSERT OR REPLACE INTO TypingIndicators (conversation_id, user_id, is_typing, last_activity)
-            VALUES (?, ?, ?, datetime('now'))
-        ");
-        $stmt->execute([$conversation_id, $user_id, $is_typing]);
-    } catch (PDOException $e) {
-        // Log error
-    }
-}
-
-function getTypingIndicator($pdo, $conversation_id, $current_user_id) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT u.first_name, ti.is_typing
-            FROM TypingIndicators ti
-            JOIN Users u ON ti.user_id = u.user_id
-            WHERE ti.conversation_id = ? AND ti.user_id != ? AND ti.is_typing = 1
-            AND ti.last_activity > datetime('now', '-5 seconds')
-        ");
-        $stmt->execute([$conversation_id, $current_user_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return [];
-    }
-}
-
-function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
-    try {
-        if ($current_user_role == 'restaurant') {
-            // Restaurante procura freelancers
-            $stmt = $pdo->prepare("
-                SELECT u.user_id, u.first_name, u.last_name, u.profile_image_url,
-                       fp.profile_id, fp.hourly_rate, fp.avg_rating
-                FROM Users u
-                JOIN UserRoles ur ON u.user_id = ur.user_id
-                JOIN Roles r ON ur.role_id = r.role_id
-                JOIN FreelancerProfiles fp ON u.user_id = fp.user_id
-                WHERE r.role_name = 'freelancer'
-                AND u.user_id != ?
-                AND (u.first_name LIKE ? OR u.last_name LIKE ?)
-                LIMIT 10
-            ");
-            $search_pattern = "%{$search_term}%";
-            $stmt->execute([$current_user_id, $search_pattern, $search_pattern]);
-        } else {
-            // Freelancer procura restaurantes
-            $stmt = $pdo->prepare("
-                SELECT u.user_id, u.first_name, u.last_name, u.profile_image_url,
-                       rp.restaurant_id, rp.restaurant_name, rp.avg_rating
-                FROM Users u
-                JOIN UserRoles ur ON u.user_id = ur.user_id
-                JOIN Roles r ON ur.role_id = r.role_id
-                JOIN RestaurantProfiles rp ON u.user_id = rp.user_id
-                WHERE r.role_name = 'restaurant'
-                AND u.user_id != ?
-                AND (u.first_name LIKE ? OR u.last_name LIKE ? OR rp.restaurant_name LIKE ?)
-                LIMIT 10
-            ");
-            $search_pattern = "%{$search_term}%";
-            $stmt->execute([$current_user_id, $search_pattern, $search_pattern, $search_pattern]);
-        }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ['error' => $e->getMessage()];
     }
 }
 ?>
@@ -329,483 +133,9 @@ function searchUsers($pdo, $search_term, $current_user_id, $current_user_role) {
     </div>
 
     <script>
-        class MessagingSystem {
-            constructor() {
-                this.currentConversationId = null;
-                this.messagePollingInterval = null;
-                this.conversationPollingInterval = null;
-                this.typingTimeout = null;
-                this.isTyping = false;
-                this.searchTimeout = null;
-
-                this.initializeElements();
-                this.bindEvents();
-                this.loadConversations();
-                this.startPolling();
-
-                // Verificar se há um conversation_id na URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const conversationId = urlParams.get('conversation_id');
-                if (conversationId) {
-                    // Carregar a conversa automaticamente
-                    this.selectConversation(conversationId, 'Conversa Carregada');
-                }
-            }
-            
-            initializeElements() {
-                this.conversationsList = document.getElementById('conversationsList');
-                this.chatHeader = document.getElementById('chatHeader');
-                this.messagesContainer = document.getElementById('messagesContainer');
-                this.messageInput = document.getElementById('messageInput');
-                this.sendButton = document.getElementById('sendButton');
-                this.messageInputArea = document.getElementById('messageInputArea');
-                this.typingIndicator = document.getElementById('typingIndicator');
-                this.searchInput = document.getElementById('searchInput');
-                this.searchButton = document.getElementById('searchButton');
-            }
-            
-            bindEvents() {
-                this.sendButton.addEventListener('click', () => this.sendMessage());
-                this.messageInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                });
-                
-                // Indicador de digitação
-                this.messageInput.addEventListener('input', () => {
-                    this.handleTyping();
-                });
-                
-                // Auto-resize textarea
-                this.messageInput.addEventListener('input', () => {
-                    this.messageInput.style.height = 'auto';
-                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 100) + 'px';
-                });
-                
-                // Eventos de pesquisa
-                this.searchButton.addEventListener('click', () => this.performSearch());
-                this.searchInput.addEventListener('input', () => {
-                    clearTimeout(this.searchTimeout);
-                    this.searchTimeout = setTimeout(() => this.performSearch(), 500);
-                });
-                this.searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.performSearch();
-                    }
-                });
-            }
-            
-            async loadConversations() {
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'get_conversations');
-                    
-                    const response = await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const conversations = await response.json();
-                    this.renderConversations(conversations);
-                } catch (error) {
-                    console.error('Erro ao carregar conversas:', error);
-                }
-            }
-            
-            renderConversations(conversations) {
-                if (!Array.isArray(conversations) || conversations.length === 0) {
-                    this.conversationsList.innerHTML = '<div class="empty-state">Nenhuma conversa encontrada</div>';
-                    return;
-                }
-                
-                const html = conversations.map(conv => `
-                    <div class="conversation-item" data-conversation-id="${conv.conversation_id}" onclick="messaging.selectConversation(${conv.conversation_id}, '${conv.first_name} ${conv.last_name}${conv.restaurant_name ? ' - ' + conv.restaurant_name : ''}')">
-                        <div class="conversation-header">
-                            <div class="conversation-name">
-                                ${conv.first_name} ${conv.last_name}
-                                ${conv.restaurant_name ? '<br><small>' + conv.restaurant_name + '</small>' : ''}
-                            </div>
-                            <div class="conversation-time">
-                                ${conv.last_message_time ? this.formatTime(conv.last_message_time) : ''}
-                            </div>
-                        </div>
-                        <div class="last-message">
-                            ${conv.last_message || 'Nenhuma mensagem ainda'}
-                        </div>
-                        ${conv.unread_count > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ''}
-                    </div>
-                `).join('');
-                
-                this.conversationsList.innerHTML = html;
-            }
-            
-            async selectConversation(conversationId, contactName) {
-                // Remover classe active de todas as conversas
-                document.querySelectorAll('.conversation-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-
-                // Adicionar classe active à conversa selecionada
-                const conversationElement = document.querySelector(`[data-conversation-id="${conversationId}"]`);
-                if (conversationElement) {
-                    conversationElement.classList.add('active');
-                }
-
-                this.currentConversationId = conversationId;
-                this.chatHeader.innerHTML = `<h3>${contactName}</h3>`;
-                this.messageInputArea.style.display = 'block';
-
-                await this.loadMessages();
-                await this.markAsRead();
-            }
-
-            async loadMessages() {
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'get_messages');
-                    formData.append('conversation_id', this.currentConversationId);
-                    
-                    const response = await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const messages = await response.json();
-                    this.renderMessages(messages);
-                } catch (error) {
-                    console.error('Erro ao carregar mensagens:', error);
-                }
-            }
-            
-            renderMessages(messages) {
-                if (!Array.isArray(messages)) {
-                    this.messagesContainer.innerHTML = '<div class="empty-state">Erro ao carregar mensagens</div>';
-                    return;
-                }
-                
-                const currentUserId = <?php echo $_SESSION['user_id']; ?>;
-                
-                const html = messages.map(msg => {
-                    const isSent = msg.sender_id == currentUserId;
-                    return `
-                        <div class="message ${isSent ? 'sent' : 'received'}">
-                            <div class="message-content">
-                                ${this.escapeHtml(msg.message_text)}
-                            </div>
-                            <div class="message-info">
-                                ${isSent ? 'Você' : msg.first_name} • ${this.formatTime(msg.created_at)}
-                                ${msg.is_read && isSent ? ' • Lida' : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                this.messagesContainer.innerHTML = html;
-                this.scrollToBottom();
-            }
-            
-            async sendMessage() {
-                const messageText = this.messageInput.value.trim();
-                if (!messageText || !this.currentConversationId) return;
-                
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'send_message');
-                    formData.append('conversation_id', this.currentConversationId);
-                    formData.append('message_text', messageText);
-                    
-                    const response = await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        this.messageInput.value = '';
-                        this.messageInput.style.height = 'auto';
-                        await this.loadMessages();
-                        await this.loadConversations(); // Atualizar lista de conversas
-                        
-                        // Parar indicador de digitação
-                        this.setTypingIndicator(false);
-                    }
-                } catch (error) {
-                    console.error('Erro ao enviar mensagem:', error);
-                }
-            }
-            
-            async markAsRead() {
-                if (!this.currentConversationId) return;
-                
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'mark_as_read');
-                    formData.append('conversation_id', this.currentConversationId);
-                    
-                    await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                } catch (error) {
-                    console.error('Erro ao marcar como lida:', error);
-                }
-            }
-            
-            handleTyping() {
-                if (!this.currentConversationId) return;
-                
-                if (!this.isTyping) {
-                    this.isTyping = true;
-                    this.setTypingIndicator(true);
-                }
-                
-                clearTimeout(this.typingTimeout);
-                this.typingTimeout = setTimeout(() => {
-                    this.isTyping = false;
-                    this.setTypingIndicator(false);
-                }, 2000);
-            }
-            
-            async setTypingIndicator(isTyping) {
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'set_typing');
-                    formData.append('conversation_id', this.currentConversationId);
-                    formData.append('is_typing', isTyping ? 1 : 0);
-                    
-                    await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                } catch (error) {
-                    console.error('Erro ao definir indicador de digitação:', error);
-                }
-            }
-            
-            async checkTypingIndicator() {
-                if (!this.currentConversationId) return;
-                
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'get_typing');
-                    formData.append('conversation_id', this.currentConversationId);
-                    
-                    const response = await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const typingUsers = await response.json();
-                    
-                    if (Array.isArray(typingUsers) && typingUsers.length > 0) {
-                        const names = typingUsers.map(user => user.first_name).join(', ');
-                        this.typingIndicator.textContent = `${names} está digitando...`;
-                        this.typingIndicator.style.display = 'block';
-                    } else {
-                        this.typingIndicator.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar indicador de digitação:', error);
-                }
-            }
-            
-            async performSearch() {
-                const searchTerm = this.searchInput.value.trim();
-                if (searchTerm.length < 2) {
-                    this.hideSearchResults();
-                    return;
-                }
-                
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'search_users');
-                    formData.append('search_term', searchTerm);
-                    
-                    const response = await fetch('', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const users = await response.json();
-                    this.showSearchResults(users);
-                } catch (error) {
-                    console.error('Erro ao pesquisar utilizadores:', error);
-                }
-            }
-            
-            showSearchResults(users) {
-                // Remover resultados anteriores
-                this.hideSearchResults();
-                
-                if (!Array.isArray(users) || users.length === 0) {
-                    return;
-                }
-                
-                const searchResults = document.createElement('div');
-                searchResults.className = 'search-results';
-                searchResults.id = 'searchResults';
-                
-                const html = users.map(user => `
-                    <div class="search-result-item" onclick="messaging.startConversationWithUser(${user.user_id}, '${user.first_name} ${user.last_name}${user.restaurant_name ? ' - ' + user.restaurant_name : ''}')">
-                        <div style="font-weight: 600;">
-                            ${user.first_name} ${user.last_name}
-                            ${user.restaurant_name ? '<br><small>' + user.restaurant_name + '</small>' : ''}
-                        </div>
-                        ${user.avg_rating ? `<small>⭐ ${user.avg_rating}/5</small>` : ''}
-                    </div>
-                `).join('');
-                
-                searchResults.innerHTML = html;
-                this.searchInput.parentNode.appendChild(searchResults);
-            }
-            
-            hideSearchResults() {
-                const existing = document.getElementById('searchResults');
-                if (existing) {
-                    existing.remove();
-                }
-            }
-            
-            async startConversationWithUser(userId, userName) {
-                this.hideSearchResults();
-                this.searchInput.value = '';
-                
-                try {
-                    const conversationId = await createNewConversation(userId);
-                    if (conversationId) {
-                        await this.loadConversations();
-                        await this.selectConversation(conversationId, userName);
-                    }
-                } catch (error) {
-                    console.error('Erro ao iniciar conversa:', error);
-                }
-            }
-            
-            startPolling() {
-                // Polling para novas mensagens
-                this.messagePollingInterval = setInterval(() => {
-                    if (this.currentConversationId) {
-                        this.loadMessages();
-                        this.checkTypingIndicator();
-                    }
-                }, 2000);
-                
-                // Polling para novas conversas
-                this.conversationPollingInterval = setInterval(() => {
-                    this.loadConversations();
-                }, 5000);
-            }
-            
-            
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                const now = new Date();
-                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-                
-                if (diffInMinutes < 1) return 'Agora';
-                if (diffInMinutes < 60) return `${diffInMinutes}min`;
-                if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
-                
-                return date.toLocaleDateString('pt-PT', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-            
-            scrollToBottom() {
-                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-            }
-            
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-            
-            stopPolling() {
-                if (this.messagePollingInterval) {
-                    clearInterval(this.messagePollingInterval);
-                }
-                if (this.conversationPollingInterval) {
-                    clearInterval(this.conversationPollingInterval);
-                }
-            }
-        }
-        
-        // Inicializar sistema de mensagens
-        let messaging;
-        document.addEventListener('DOMContentLoaded', () => {
-            messaging = new MessagingSystem();
-        });
-        
-        // Limpar intervalos quando sair da página
-        window.addEventListener('beforeunload', () => {
-            if (messaging) {
-                messaging.stopPolling();
-            }
-        });
-        
-        // Função global para selecionar conversa (chamada pelos elementos HTML)
-        function selectConversation(conversationId, contactName) {
-            messaging.selectConversation(conversationId, contactName);
-        }
-        
-        // Função para criar nova conversa (se necessário)
-        async function createNewConversation(targetUserId) {
-            try {
-                const formData = new FormData();
-                formData.append('action', 'create_conversation');
-                formData.append('target_user_id', targetUserId);
-                
-                const response = await fetch('', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    messaging.loadConversations();
-                    return result.conversation_id;
-                }
-            } catch (error) {
-                console.error('Erro ao criar conversa:', error);
-            }
-            return null;
-        }
-        
-        // Notificação de som para novas mensagens (opcional)
-        function playNotificationSound() {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUSBjqT2fPJeSsFJnvN8tuNOggSYrjq2JZKCgxOqOT0t2AeBDySz+GhXR0LYKjl7aJWFApBmeP1xGYYBzJ+GAAA');
-            audio.volume = 0.3;
-            audio.play();
-        }
-        
-        // Sistema de notificações do navegador (opcional)
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-        }
-        
-        function showNotification(title, message) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(title, {
-                    body: message,
-                    icon: '/favicon.ico'
-                });
-            }
-        }
-        
-        // Solicitar permissão para notificações quando página carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            requestNotificationPermission();
-        });
+        // Definir variável global antes de carregar o script
+        window.currentUserId = <?php echo $_SESSION['user_id']; ?>;
     </script>
+    <script src="../../JavaScript/chat.js"></script>
 </body>
 </html>
