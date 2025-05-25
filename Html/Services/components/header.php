@@ -89,7 +89,7 @@ error_log("É admin: " . ($is_admin ? 'sim' : 'não'));
                         <span class="dropdown-icon">▼</span>
                     </div>
                     <div class="user-dropdown-content">
-                        <a href="/Html/Log/profile.php">Meu Perfil</a>
+                        <a href="../../Log/perfil.php">Meu Perfil</a>
                         <?php if ($user_data['role_name'] === 'freelancer'): ?>
                             <a href="/Html/Profile/freelancer.php">Perfil Freelancer</a>
                         <?php elseif ($user_data['role_name'] === 'restaurant'): ?>
