@@ -1029,3 +1029,150 @@ img {
     justify-content: flex-end;
     gap: 10px;
 }
+/*
+*
+*
+*
+*
+*
+*
+**
+*
+*
+*
+*
+*
+**
+*
+*
+*
+*
+*
+**
+*
+*
+*
+*
+*
+*/
+/* Estilo para a barra de busca */
+.search-section {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.search-section input {
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.search-section button {
+    background: none;
+    border: none;
+    color: #4a6cf7;
+    cursor: pointer;
+}
+
+/* Estilo para as seções */
+.skills-section, .languages-section, .specializations-section {
+    margin-bottom: 30px;
+}
+
+.skills-section h3, .languages-section h3, .specializations-section h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Estilo para listas */
+.skills-list, .languages-list, .specializations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Estilo para itens */
+.skill-item, .language-item, .specialization-item {
+    background-color: #f0f7ff;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+/* Estilo para nomes */
+.skill-name, .language-name, .specialization-name {
+    font-weight: 500;
+}
+
+/* Estilo para níveis de proficiência */
+.proficiency-level {
+    font-size: 12px;
+    color: #666;
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid #ccc;
+}
+
+/* Estilo para botões de edição e remoção */
+.edit-btn, .remove-btn {
+    background: none;
+    border: none;
+    color: #4a6cf7;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+/* Estilo para formulários de edição */
+.edit-form {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.edit-form input, .edit-form select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+}
+
+/* Estilo para botões de salvar */
+.save-btn {
+    background: none;
+    border: none;
+    color: #28a745;
+    cursor: pointer;
+}
+
+/* Estilo para adicionar itens */
+.add-skill, .add-language, .add-specialization {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.skill-select, .language-select, .proficiency-select {
+    padding: 8px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+}
+
+/* Estilo para botões de adicionar */
+.add-btn {
+    background: none;
+    border: none;
+    color: #28a745;
+    cursor: pointer;
+}
+
+.add-btn i {
+    font-size: 18px;
+}

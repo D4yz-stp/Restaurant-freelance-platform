@@ -23,7 +23,7 @@ $pdo = $db->getConnection();
 // Verificar se o ID do serviço foi fornecido
 if (!isset($_GET['id'])) {
     // Redirecionar para a página de pesquisa de serviços se não houver ID
-    header("Location: search-services.php");
+    header("Location: ../main_service/index.php?search=");
     exit();
 }
 
@@ -153,6 +153,7 @@ require_once '../components/header.php';
 
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script src="../../../JavaScript/main.js"></script>
+
 <?php
 ?>
 </body>
