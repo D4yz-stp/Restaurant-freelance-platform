@@ -265,6 +265,7 @@ ALTER TABLE FreelancerProfiles ADD COLUMN availability_details TEXT;
 
 ALTER TABLE Conversations ADD COLUMN job_id INTEGER REFERENCES Services(service_id);
 
+ALTER TABLE Users ADD COLUMN specialization TEXT;
 
 -- Inserir dados na tabela Users
 INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
