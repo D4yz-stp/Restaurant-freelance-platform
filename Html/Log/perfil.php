@@ -3,8 +3,14 @@ session_start();
 
 // Verificar se o usuário está logado e é freelancer
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'freelancer') {
+    if ($_SESSION['user_role'] == 'restaurant' ){
+        header('Location: perfil_m.php');
+        exit();
+    }
+    else{
     header('Location: login.php');
     exit();
+    }
 }
 
 // Conectar à base de dados
@@ -283,6 +289,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error_message = "Erro: " . $e->getMessage();
                     }
                     break;
+                case 'change_password':
+                    // Verificar se a senha atual está correta
+                    $stmt = $pdo->prepare("SELECT password_hash FROM Users WHERE user_id = ?");
+                    $stmt->execute([$user_id]);
+                    $user = $stmt->fetch();
+                    
+                    if (!$user || !password_verify($_POST['current_password'], $user['password_hash'])) {
+                        $error_message = "Senha atual incorreta.";
+                    } elseif ($_POST['new_password'] !== $_POST['confirm_password']) {
+                        $error_message = "Nova senha e confirmação não coincidem.";
+                    } elseif (strlen($_POST['new_password']) < 6) {
+                        $error_message = "Nova senha deve ter pelo menos 6 caracteres.";
+                    } else {
+                        // Atualizar senha
+                        $new_password_hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
+                        $stmt = $pdo->prepare("UPDATE Users SET password_hash = ? WHERE user_id = ?");
+                        $stmt->execute([$new_password_hash, $user_id]);
+                        $success_message = "Senha alterada com sucesso!";
+                    }
+                    break;
             }
         }
     } catch (PDOException $e) {
@@ -415,6 +441,7 @@ try {
 
         <!-- Perfil Básico -->
         <div class="profile-section">
+        
             <h3>Informações Básicas</h3>
             <form method="POST">
                 <input type="hidden" name="action" value="update_profile">
@@ -442,6 +469,26 @@ try {
                     <textarea id="availability_details" name="availability_details" placeholder="Descreva sua disponibilidade detalhadamente..."><?= htmlspecialchars($profile['availability_details'] ?? '') ?></textarea>
                 </div>
                 <button type="submit" class="profile-btn">Atualizar Perfil</button>
+            </form>
+        </div>
+
+        <div class="profile-section">
+            <h3>Alterar Senha</h3>
+            <form method="POST">
+                <input type="hidden" name="action" value="change_password">
+                <div class="input-group">
+                    <label for="current_password">Senha Atual</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                <div class="input-group">
+                    <label for="new_password">Nova Senha</label>
+                    <input type="password" id="new_password" name="new_password" required minlength="6">
+                </div>
+                <div class="input-group">
+                    <label for="confirm_password">Confirmar Nova Senha</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                </div>
+                <button type="submit" class="profile-btn">Alterar Senha</button>
             </form>
         </div>
 

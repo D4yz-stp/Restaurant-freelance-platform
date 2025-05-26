@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS Services;
 DROP TABLE IF EXISTS ServiceCategories;
 DROP TABLE IF EXISTS RestaurantProfiles;
 DROP TABLE IF EXISTS FreelancerProfiles;
+DROP VIEW IF EXISTS FreelancerRatingView;
 DROP TABLE IF EXISTS UserRoles;
 DROP TABLE IF EXISTS Roles;
 DROP TABLE IF EXISTS Users;
@@ -124,9 +125,14 @@ CREATE TABLE Contracts (
     description TEXT NOT NULL,
     agreed_price REAL NOT NULL,
     payment_type TEXT NOT NULL,
+    hourly_rate REAL,
+    hours_per_week INTEGER,
     start_date DATETIME NOT NULL,
     end_date DATETIME,
-    status TEXT DEFAULT 'ativo',
+    status TEXT DEFAULT 'pendente' CHECK (status IN ('pendente', 'aceite', 'rejeitado', 'ativo', 'concluído', 'cancelado')),
+    payment_status TEXT DEFAULT 'não pago' CHECK (payment_status IN ('não pago', 'pago')),
+    response_date TIMESTAMP,
+    last_payment_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (restaurant_id) REFERENCES RestaurantProfiles(restaurant_id) ON DELETE CASCADE,
     FOREIGN KEY (freelancer_id) REFERENCES FreelancerProfiles(profile_id) ON DELETE CASCADE,
@@ -139,8 +145,13 @@ CREATE TABLE Payments (
     contract_id INTEGER NOT NULL,
     amount REAL NOT NULL,
     payment_method TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pendente',
+    status TEXT NOT NULL DEFAULT  'pendente' CHECK (status IN ('pendente', 'concluído', 'rejeitado', 'devolvido')),
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    transaction_reference TEXT,
+    notes TEXT,
+    card_last4 TEXT,
+    card_brand TEXT,
+    card_expiry TEXT,
     FOREIGN KEY (contract_id) REFERENCES Contracts(contract_id) ON DELETE CASCADE
 );
 
@@ -266,6 +277,8 @@ ALTER TABLE FreelancerProfiles ADD COLUMN availability_details TEXT;
 ALTER TABLE Conversations ADD COLUMN job_id INTEGER REFERENCES Services(service_id);
 
 ALTER TABLE Users ADD COLUMN specialization TEXT;
+
+ALTER TABLE Contracts ADD COLUMN hourly_rate DATE;
 
 -- Inserir dados na tabela Users
 INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES

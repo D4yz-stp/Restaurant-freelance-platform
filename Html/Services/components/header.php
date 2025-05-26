@@ -101,6 +101,7 @@ error_log("É admin: " . ($is_admin ? 'sim' : 'não'));
                             <a href="/Html/Admin/painel.php">Painel de Controle</a>
                         <?php endif; ?>
                         
+                        <a href="/Php/contracts.php/">Contratos</a>
                         <a href="/Html/Services/main_service/index.php">Serviços</a>
                         <a href="/Html/Log/logout.html">Sair</a>
                     </div>
