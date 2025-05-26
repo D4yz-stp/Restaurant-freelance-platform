@@ -186,10 +186,14 @@ CREATE TABLE Messages (
     sender_id INTEGER NOT NULL,
     message_text TEXT NOT NULL,
     is_read INTEGER DEFAULT 0,
+    is_delivered INTEGER DEFAULT 0,
+    read_at TIMESTAMP,
+    delivered_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES Conversations(conversation_id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
 
 -- Especializações dos chefs
 CREATE TABLE ChefSpecializations (
@@ -203,6 +207,15 @@ CREATE TABLE ChefSpecializations (
     FOREIGN KEY (freelancer_id) REFERENCES FreelancerProfiles(profile_id) ON DELETE CASCADE
 );
 
+CREATE TABLE TypingIndicators (
+    indicator_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    is_typing INTEGER DEFAULT 0,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES Conversations(conversation_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
 -- Especialização em Limpeza
 CREATE TABLE CleaningSpecializations (
     cleaning_id INTEGER PRIMARY KEY AUTOINCREMENT,
