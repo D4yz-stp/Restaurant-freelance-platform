@@ -164,19 +164,10 @@ $show_debug = true;
         </p>
     </div>
     
-    <?php if ($show_debug && !empty($debug_info)): ?>
-    <div class="debug-info">
-        <h3>Informações de Debug:</h3>
-        <ul>
-            <?php foreach ($debug_info as $info): ?>
-                <li><?php echo htmlspecialchars($info); ?></li>
-            <?php endforeach; ?>
-        </ul>
-        <h4>Estrutura de Diretórios:</h4>
-        <p>Diretório atual: <?php echo htmlspecialchars(getcwd()); ?></p>
-        <p>Arquivo atual: <?php echo htmlspecialchars($_SERVER['SCRIPT_FILENAME']); ?></p>
-    </div>
-    <?php endif; ?>
+   
+
+    
     
 </body>
 </html>
+
