@@ -1,4 +1,39 @@
-<h1>Freelance Services Marketplace</h1>
-A group project website built for a university course on 'Web languages and technologies'.
+# ltw01g01
 
-*In Construction*
+## Features
+
+**User:**
+- [x] Register a new account.
+- [ ] Log in and out.
+- [x] Edit their profile, including their name, username, password, and email.
+
+**Freelancers:**
+- [ ] List new services, providing details such as category, pricing, delivery time, and service description, along with images or videos.
+- [x] Track and manage their offered services.
+- [x] Respond to inquiries from clients regarding their services and provide custom offers if needed.
+- [x] Mark services as completed once delivered.
+
+**Clients:**
+- [ ] Browse services using filters like category, price, and rating.
+- [ ] Engage with freelancers to ask questions or request custom orders.
+- [ ] Hire freelancers and proceed to checkout (simulate payment process).
+- [ ] Leave ratings and reviews for completed services.
+
+**Admins:**
+- [ ] Elevate a user to admin status.
+- [ ] Introduce new service categories and other pertinent entities.
+- [ ] Oversee and ensure the smooth operation of the entire system.
+
+**Extra:**
+- [ ] Something else.
+
+## Running
+
+    sqlite3 database/TesteOlga.db < database/Simple.sql
+    php -S localhost:9000
+
+## Credentials
+
+- maria.souza@example.com/password
+- joao.silva@example.com/password
+- admin.sistema@example.com/password

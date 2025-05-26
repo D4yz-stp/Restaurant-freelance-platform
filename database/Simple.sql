@@ -282,7 +282,7 @@ ALTER TABLE Users ADD COLUMN specialization TEXT;
 -- Inserir dados na tabela Users
 INSERT INTO Users (first_name, last_name, email, password_hash, contact, country, city) VALUES
 ('João', 'Silva', 'joao.silva@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '11987654321', 'Brasil', 'São Paulo'),
-('Maria', 'Souza', 'maria.souza@example.com', 'hashed_password_2', '21987654321', 'Brasil', 'Rio de Janeiro'),
+('Maria', 'Souza', 'maria.souza@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '21987654321', 'Brasil', 'Rio de Janeiro'),
 ('Carlos', 'Oliveira', 'carlos.oliveira@example.com', 'hashed_password_3', '31987654321', 'Brasil', 'Belo Horizonte'),
 ('Ana', 'Pereira', 'ana.pereira@example.com', 'hashed_password_4', '41987654321', 'Brasil', 'Curitiba'),
 ('Pedro', 'Almeida', 'pedro.almeida@example.com', 'hashed_password_5', '51987654321', 'Brasil', 'Porto Alegre'),

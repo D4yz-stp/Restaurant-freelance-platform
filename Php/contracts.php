@@ -2,7 +2,7 @@
 session_start();
 
 // Caminho absoluto para a base de dados
-$db_path ='../database/TesteOlga.db';
+$db_path = '../database/TesteOlga.db';
 if (!file_exists($db_path)) {
     die('Base de dados não encontrada em: ' . $db_path);
 }
@@ -228,6 +228,8 @@ if ($role === 'freelancer') {
 }
 
 $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
+
+require_once '../Html/Services/components/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -236,12 +238,6 @@ $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
     <meta charset="UTF-8">
     <title>Contratos - OlgaRJ</title>
     <link rel="stylesheet" href="../../Css/contracts.css">
-    <!-- Adicionando Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Adicionando Moment.js para formatação de datas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/pt.js"></script>
-    
     <style>
         .alert {
             padding: 15px;
@@ -267,9 +263,11 @@ $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
             color: #ffc107;
         }
     </style>
-    <link rel="stylesheet" href="../Css/contracts.css">
+    <link rel="stylesheet" href="../Css/global.css">
+    <link rel="stylesheet" href="../Css/header+button.css">
 </head>
 <body>
+    
     <div class="contracts-container">
         <div class="contracts-header">
             <h2>Meus Contratos</h2>
@@ -314,8 +312,13 @@ $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
                 </div>
                 
                 <div class="form-group">
-                    <label for="title">Título do Trabalho: <span style="color: red;">*</span></label>
-                    <input type="text" id="title" name="title" required placeholder="Ex: Chef para evento de casamento">
+                    <label for="service_id">Selecione um Serviço: <span style="color: red;">*</span></label>
+                    <select id="service_id" name="service_id" required onchange="updateTitleFromService()">
+                        <option value="">-- Escolha um serviço --</option>
+                        <option value="1" data-title="Cozinheiro para eventos">Cozinheiro para eventos</option>
+                        <option value="2" data-title="Serviço de Limpeza geral">Serviço de Limpeza geral</option>
+                        <option value="3" data-title="Bartender profissional">Bartender profissional</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">
@@ -584,6 +587,14 @@ $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
         const today = new Date();
         startDate.value = today.toISOString().slice(0, 16);
         endDate.value = new Date(today.setDate(today.getDate() + 7)).toISOString().slice(0, 16);
+
+        function updateTitleFromService() {
+            const select = document.getElementById("service_id");
+            const selectedOption = select.options[select.selectedIndex];
+            const title = selectedOption.getAttribute("data-title");
+
+            document.getElementById("title").value = title || "";
+        }
 
         function calculateContractTotal() {
             if (hourlyRate.value && hoursPerWeek.value && startDate.value && endDate.value) {
