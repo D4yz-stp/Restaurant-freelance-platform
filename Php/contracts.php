@@ -2,7 +2,7 @@
 session_start();
 
 // Caminho absoluto para a base de dados
-$db_path =  '../database/TesteOlga.db';
+$db_path ='../database/TesteOlga.db';
 if (!file_exists($db_path)) {
     die('Base de dados não encontrada em: ' . $db_path);
 }
@@ -12,7 +12,7 @@ $db->exec('PRAGMA foreign_keys = ON;');
 
 // Verificar sessão
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../../login.php');
+    header('Location: ../../Html/Log/login.php');
     exit;
 }
 
@@ -267,6 +267,7 @@ $create_mode = isset($_GET['create']) && $_GET['create'] === 'true';
             color: #ffc107;
         }
     </style>
+    <link rel="stylesheet" href="../Css/contracts.css">
 </head>
 <body>
     <div class="contracts-container">
