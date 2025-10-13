@@ -12,7 +12,7 @@ O projeto foi desenvolvido como parte de um **trabalho académico de Engenharia 
 
 ---
 
-## 🛠 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **Front-end:** HTML, CSS, JavaScript (Vanilla)
 - **Back-end:** PHP
@@ -22,7 +22,7 @@ O projeto foi desenvolvido como parte de um **trabalho académico de Engenharia 
 
 ---
 
-## ⭐ Funcionalidades Principais
+## Funcionalidades Principais
 
 ### Para Freelancers:
 - Criar, editar e gerenciar serviços detalhados (categoria, preço, descrição, imagens).
@@ -59,7 +59,7 @@ O projeto foi desenvolvido como parte de um **trabalho académico de Engenharia 
 
 ---
 
-## 📊 Banco de Dados
+## Banco de Dados
 
 O banco de dados foi cuidadosamente projetado para suportar todas as funcionalidades do sistema, com **tabelas, triggers, views e relações complexas**:
 
@@ -71,7 +71,7 @@ O banco de dados foi cuidadosamente projetado para suportar todas as funcionalid
 
 ---
 
-## 📝 Metodologia
+## Metodologia
 
 O desenvolvimento seguiu **Agile Scrum**, com **user stories e sprints flexíveis**, permitindo:
 - Planeamento detalhado antes da implementação.
@@ -80,7 +80,7 @@ O desenvolvimento seguiu **Agile Scrum**, com **user stories e sprints flexívei
 
 ---
 
-## ⚡ Diferenciais do OlgaRJ
+## Diferenciais do OlgaRJ
 
 - Sistema completo para freelancers, restaurantes e admins.
 - Filtros de busca avançados e detalhados.
@@ -91,7 +91,7 @@ O desenvolvimento seguiu **Agile Scrum**, com **user stories e sprints flexívei
 
 ---
 
-## 💻 Como Rodar Localmente
+## Como Rodar Localmente
 
 1. Clone o repositório:
 ```bash
@@ -112,7 +112,7 @@ php -S localhost:9000
 - joao.silva@example.com / password // freelancer
 - admin.sistema@example.com / password
 
-## ✨ Conclusão
+## Conclusão
 
 O **OlgaRJ** demonstra domínio completo de **desenvolvimento full-stack**, **banco de dados avançado**, **UX/UI e metodologias ágeis**, sendo um projeto de destaque para apresentação em portfólio ou GitHub para futuras oportunidades de estágio ou emprego.
 
@@ -125,3 +125,4 @@ O **OlgaRJ** demonstra domínio completo de **desenvolvimento full-stack**, **ba
 - Localização: Algarve, Portugal ( fake localization )
 
 © 2025 OlgaRJ. Todos os direitos reservados.
+
