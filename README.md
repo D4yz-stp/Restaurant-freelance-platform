@@ -1,6 +1,6 @@
 # OlgaRJ – Freelance Platform for Restaurants
 
-## 🚀 Visão Geral
+## Visão Geral
 
 O **OlgaRJ** é uma plataforma de freelancing inovadora, focada no setor de restauração, desenvolvida para **facilitar a ponte entre gerentes de restaurantes e profissionais que buscam trabalhos flexíveis (part-time ou contratos curtos)**.
 
@@ -125,4 +125,5 @@ O **OlgaRJ** demonstra domínio completo de **desenvolvimento full-stack**, **ba
 - Localização: Algarve, Portugal ( fake localization )
 
 © 2025 OlgaRJ. Todos os direitos reservados.
+
 
